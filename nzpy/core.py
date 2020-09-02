@@ -2802,24 +2802,32 @@ def interval2tm(interval_time, interval_month, fsec):
     if tmpVal != 0 :
         interval_time -= tmpVal * 86400000000
         mday = tmpVal
-        
+    else :
+        mday = 0
+
     tmpVal = interval_time // 3600000000
     
     if tmpVal != 0 :
         interval_time -= tmpVal * 3600000000
         hour = tmpVal
+    else :
+        hour = 0
         
     tmpVal = interval_time // 60000000
     
     if tmpVal != 0 :
         interval_time -= tmpVal * 60000000
         min = tmpVal
+    else :
+        min = 0
         
     tmpVal = interval_time // 1000000
     
     if tmpVal != 0 :
         interval_time -= tmpVal * 1000000
         sec = tmpVal
+    else :
+        sec = 0
     
     time.append(year)
     time.append(mon)
@@ -2839,8 +2847,9 @@ def EncodeTimeSpan(tm, fsec):
 	# But we'll need to check for is_before and is_nonzero
 	# when determining the signs of hour/minute/seconds fields.
 	#
-    is_before = minus = False
-    
+    is_nonzero = is_before = minus = False
+    str = ""
+
     if tm[0] != 0:
         str = "{} year"
         str = str.format(tm[0])
