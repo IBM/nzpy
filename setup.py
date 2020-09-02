@@ -1,28 +1,20 @@
 #!/usr/bin/env python
+import os
 
 from setuptools import setup
 
-long_description = """\
-
-nzpy
-----
-
-nzpy is a Pure-Python interface to the Netezza database engine.  It is \
-nzpy is somewhat distinctive in that it is written entirely in Python and does not \
-rely on any external libraries (such as a compiled python module, or \
-PostgreSQL's libpq library). nzpy supports the standard Python DB-API \
-version 2.0.
-"""
+readme = os.path.join(os.path.dirname(__file__), "README.md")
 
 setup(
     name="nzpy",
     version=1.0,
-    description="Netezza interface library",
-    long_description=long_description,
+    description="IBM Netezza python driver",
+    long_description=open(readme).read(),
+    long_description_content_type='text/markdown',
     author="IBM",
     author_email="shabmoh3@in.ibm.com",
     url="https://github.com/ibm/nzpy",
-    license="BSD",
+    license="IBM",
     python_requires='>=3.5',
     install_requires=['scramp==1.1.0'],
     classifiers=[
@@ -41,6 +33,12 @@ setup(
         "Topic :: Database :: Front-Ends",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
+    project_urls={
+        "Documentation": "https://github.com/IBM/nzpy/wiki",
+        "Source": "https://github.com/IBM/nzpy",
+        "Tracker": "https://github.com/IBM/nzpy/issues",
+    },
+
     keywords="Netezza dbapi",
     packages=("nzpy",)
 )
