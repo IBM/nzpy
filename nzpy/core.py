@@ -1762,6 +1762,7 @@ class Connection():
         
     def execute(self, cursor, query, vals):
         
+        self.error = None
         cursor._row_count = -1
         cursor.ps = {'row_desc': []}
 
