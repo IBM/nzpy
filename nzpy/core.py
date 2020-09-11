@@ -1751,6 +1751,8 @@ class Connection():
             elif isinstance(arg, bytes):
                 bytfmt = "x'{}'"                
                 query = query.replace('?', bytfmt.format(arg.decode(self._client_encoding)), 1)                
+            elif arg is None:
+                query = query.replace('?', 'NULL', 1)
             else:
                 query = query.replace('?', str(arg), 1)
         
