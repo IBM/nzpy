@@ -2013,19 +2013,19 @@ class Connection():
                 memsize = 1
                 
             if fldtype == NzTypeChar:
-                value = str(fieldDataP[:fldlen], self._client_encoding)
+                value = str(fieldDataP[:fldlen], 'latin')
                 row.append(value)
                 logging.debug("field=%d, datatype=CHAR, value=%s", cur_field+1,value)                
                 
-            if fldtype == NzTypeNChar or fldtype == NzTypeVarFixedChar:
+            if fldtype == NzTypeNChar or fldtype == NzTypeNVarChar:
                 cursize  = int.from_bytes(fieldDataP[0:2], 'little') - 2
                 value = str(fieldDataP[2:cursize+2], self._client_encoding)
                 row.append(value)
                 logging.debug("field=%d, datatype=%s, value=%s", cur_field+1,dataType[fldtype], value)                
                 
-            if fldtype == NzTypeVarChar or fldtype == NzTypeNVarChar or fldtype == NzTypeGeometry or fldtype == NzTypeVarBinary:
+            if fldtype == NzTypeVarChar or fldtype == NzTypeVarFixedChar or fldtype == NzTypeGeometry or fldtype == NzTypeVarBinary:
                 cursize  = int.from_bytes(fieldDataP[0:2], 'little') - 2
-                value = str(fieldDataP[2:cursize+2], self._client_encoding)
+                value = str(fieldDataP[2:cursize+2], 'latin')
                 row.append(value)
                 logging.debug("field=%d, datatype=%s, value=%s", cur_field+1,dataType[fldtype], value)
                 
