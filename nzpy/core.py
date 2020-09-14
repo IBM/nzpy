@@ -1962,12 +1962,15 @@ class Connection():
         if (numFields % 8) > 0 :
             bitmaplen+=1        
             
-        # We ignore first 2 bytes as that denotes length of message. Now convert hex to dec 
-        hex = data[2:2+bitmaplen].hex()
-        dec = int(hex, 16)
+        bitmap = []
+        for i in range(bitmaplen):
+            # We ignore first 2 bytes as that denotes length of message. Now convert hex to dec 
+            hex = data[2+i:3+i].hex()
+            dec = int(hex, 16)
         
-        # convert dec to binary
-        bitmap = decimalToBinary(dec,bitmaplen*8)
+            # convert dec to binary
+            temp = decimalToBinary(dec,8)
+            bitmap.extend(temp)
                
         field_lf = 0
         cur_field = 0
