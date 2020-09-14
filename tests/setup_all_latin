@@ -1,0 +1,2 @@
+nzsql -d nzpy_test -c "CREATE TABLE all_latin_datatypes ( a_srno int, a_char10 char(10), a_char1000 char(1000),a_varchar10 varchar(10), a_varchar32767 varchar(32767));"
+nzload -db nzpy_test -df ./data/all_latin9.data -t all_latin_datatypes -quotedValue YES -encoding LATIN9 -delim ,

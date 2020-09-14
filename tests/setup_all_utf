@@ -1,0 +1,2 @@
+nzsql -d nzpy_test -c "CREATE TABLE all_utf_datatypes ( a_srno int, a_nchar10 nchar(10),a_nchar1000 nchar(1000), a_nvarchar10 nvarchar(10));"
+nzload -db nzpy_test -df ./data/all_utf.data -t all_utf_datatypes -quotedValue YES -encoding UTF8 -delim ,
