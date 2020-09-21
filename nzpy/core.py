@@ -1754,7 +1754,7 @@ class Connection():
             else:
                 query = query.replace('?', str(arg), 1)
         
-        if statement.find('select') != -1 or statement.find('SELECT') != -1 :
+        if statement.find('select') == 0 or statement.find('SELECT') == 0 :
             statement = statement + " ANALYZE"
             self.execute(cursor, statement, None)
                         
