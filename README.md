@@ -89,9 +89,9 @@ Below are the securityLevel you can pass in connection string :
 ## Connection String 
 Use connect to create a database connection with connection parameters: 
 ```
-conn = nzpy.connect(user="admin", password="password",host='vmnps-dw10.svl.ibm.com', port=5480, database="db1", securityLevel=3, logLevel=0, ssl = {'ca_certs' : '/nz/cacert.pem'})
+conn = nzpy.connect(user="admin", password="password",host='localhost', port=5480, database="db1", securityLevel=3, logLevel=0, ssl = {'ca_certs' : '/nz/cacert.pem'})
 ```
-The above example opens a database handle on NPS server 'vmnps-dw10.svl.ibm.com'. nzpy driver should connect on port 5480(postgres port). The user is admin, password is password, database is db1 and the location of the ca certificate file is /nz/cacert.pem with securityLevel as 'Only Secured session' 
+The above example opens a database handle on localhost. nzpy driver should connect on port 5480(postgres port). The user is admin, password is password, database is db1 and the location of the ca certificate file is /nz/cacert.pem with securityLevel as 'Only Secured session' 
 
 **Connection Parameters**
 When establishing a connection using nzgo you are expected to supply a connection string containing zero or more parameters. Below are subset of the connection parameters supported by nzgo. 
