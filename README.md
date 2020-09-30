@@ -17,39 +17,37 @@ This examples make use of the nzpy extensions to the DB-API 2.0 standard,
 
 Import nzpy, connect to the database, create a table, add some rows and then query the table:
 ```
-cursor = conn.cursor()
-try:
-    cursor.execute("create table t1(c1 numeric (10,5), c2 varchar(10),c3 nchar(5))")
-    print("table created successfully")
-except:
-    print("Error while creating table")
+with conn.cursor() as cursor:
+    try:
+        cursor.execute("create table t1(c1 numeric (10,5), c2 varchar(10),c3 nchar(5))")
+        print("table created successfully")
+    except:
+        print("Error while creating table")
 
-cursor.execute("insert into t1 values (?,?,?)", (456.54,'abcd','abc'))
-print(cursor.rowcount, 'products inserted')
-cursor.execute("update t1 set c2 = 'uvw' where c2 = ?", ('abcd',))
-print(cursor.rowcount, 'products updated')
-cursor.execute("delete from t1 where c2 = ?", ('uvw',))
-print(cursor.rowcount, 'products deleted')
-cursor.close()
+    cursor.execute("insert into t1 values (?,?,?)", (456.54,'abcd','abc'))
+    print(cursor.rowcount, 'products inserted')
+    cursor.execute("update t1 set c2 = 'uvw' where c2 = ?", ('abcd',))
+    print(cursor.rowcount, 'products updated')
+    cursor.execute("delete from t1 where c2 = ?", ('uvw',))
+    print(cursor.rowcount, 'products deleted')
 ```
 
 ## Autocommit
 As autocommit is on by default in IBM Netezza the default value of autocommit is on. It can be turned off by using the autocommit property of the connection.
 ```
 conn.autocommit = False #autocommit is on by default. It can be turned off by using the autocommit property of the connection.
-cursor = conn.cursor()
-cursor.execute("create table t2(c1 numeric (10,5), c2 varchar(10),c3 nchar(5))")
-cursor.execute("insert into t2 values (123.54,'xcfd','xyz')")
-conn.rollback()
-cursor.close()
+with conn.cursor() as cursor:
+    cursor.execute("create table t2(c1 numeric (10,5), c2 varchar(10),c3 nchar(5))")
+    cursor.execute("insert into t2 values (123.54,'xcfd','xyz')")
+    conn.rollback()
 ```
 
 ## Notices
 IBM Netezza notices are stored in a deque called Connection.notices and added using the append() method. Here’s an example:
 ```
-cursor = conn.cursor()
-cursor.execute("call CUSTOMER();")
-print(conn.notices)
+with conn.cursor() as cursor:
+    cursor.execute("call CUSTOMER();")
+    print(conn.notices)
 
 NOTICE: The customer name is alpha
 ```
@@ -112,12 +110,12 @@ As autocommit is on by default in IBM Netezza the default value of autocommit is
 ```
 conn.autocommit = False #This would internally called 'begin'
 
-cursor = conn.cursor()
-cursor.execute("create table t2(c1 numeric (10,5), c2 varchar(10),c3 nchar(5))")
-conn.commit()  # This will commit create table transaction
+with conn.cursor() as cursor:
+    cursor.execute("create table t2(c1 numeric (10,5), c2 varchar(10),c3 nchar(5))")
+    conn.commit()  # This will commit create table transaction
 
-cursor.execute("insert into t2 values (123.54,'xcfd','xyz')")
-conn.rollback() # This will rollback insert into table transaction
+    cursor.execute("insert into t2 values (123.54,'xcfd','xyz')")
+    conn.rollback() # This will rollback insert into table transaction
 ```
 
 ## Supported Data Types 
@@ -134,11 +132,11 @@ This package returns the following types for values from the IBM Netezza backend
 ## Parameter Style
 nzpy do not support all the DB-API parameter styles. It only supports qmark style. Here’s an example of using the 'qmark' parameter style:
 ```
-cursor = conn.cursor()
-cursor.execute("select * from t1 where c3 = ? and c2 = ?", ('abc','abcd'))
-results = cursor.fetchall()
-for c1, c2, c3 in results:
-    print("c1 = %s, c2 = %s, c3 = %s" % (c1, c2, c3))
+with conn.cursor() as cursor:
+    cursor.execute("select * from t1 where c3 = ? and c2 = ?", ('abc','abcd'))
+    results = cursor.fetchall()
+    for c1, c2, c3 in results:
+        print("c1 = %s, c2 = %s, c3 = %s" % (c1, c2, c3))
 ```
 
 ## External table 
