@@ -18,7 +18,7 @@ from time import localtime
 import nzpy
 from . import handshake, numeric
 from json import loads, dumps
-from os import getpid
+from os import getpid, path
 from scramp import ScramClient
 import enum
 import logging 
@@ -2317,10 +2317,7 @@ class Connection():
         status = True
         
         #If no explicit -logDir mentioned (defaulted by backend to /tmp)
-        if platform.system() == "Windows" :
-            fullpath = logDir + "\\" + filename
-        elif platform.system() == "Linux" :
-            fullpath = logDir + "/" + filename        
+        fullpath = path.join(logDir, filename)
     
         if logType == 1 :
             fullpath = fullpath + ".nzlog"
