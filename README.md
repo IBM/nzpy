@@ -78,14 +78,14 @@ with conn.cursor() as cursor:
     
     # using remotesource 'python', create named external table and unload table data 
     try:
-        cursor.execute("create external table et1 'C:\\Users\\ShabbirMohammad\\Desktop\\Project\\et10' using ( remotesource 'python' delimiter '|') as select * from customerAddress")
+        cursor.execute("create external table et1 '/tmp/et10' using ( remotesource 'python' delimiter '|') as select * from customerAddress")
         print("Create external table created successfully")        
     except Exception as e:
         print(str(e))
 
     # load data from external table onto user table
     try:
-        cursor.execute("insert into customerAddress select * from external 'C:\\Users\\ShabbirMohammad\\Desktop\\Project\\et10' using ( remotesource 'python' delimiter '|' socketbufsize 8388608 ctrlchars 'yes'  encoding 'internal' timeroundnanos 'yes' crinstring 'off' maxerrors 3 LogDir 'C:\\Users\\ShabbirMohammad\\Desktop\\Project\\python')")
+        cursor.execute("insert into customerAddress select * from external '/tmp/et10' using ( remotesource 'python' delimiter '|' socketbufsize 8388608 ctrlchars 'yes'  encoding 'internal' timeroundnanos 'yes' crinstring 'off' maxerrors 3 LogDir '/tmp/python')")
         print("External Table loaded successfully")  
     except Exception as e:
         print(str(e))
