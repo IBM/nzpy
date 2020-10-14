@@ -85,7 +85,7 @@ with conn.cursor() as cursor:
 
     # load data from external table onto user table
     try:
-        cursor.execute("insert into customerAddress select * from external '/tmp/et10' using ( remotesource 'python' delimiter '|' socketbufsize 8388608 ctrlchars 'yes'  encoding 'internal' timeroundnanos 'yes' crinstring 'off' maxerrors 3 LogDir '/tmp/python')")
+        cursor.execute("insert into customerAddress select * from external '/tmp/et10' using ( remotesource 'python' delimiter '|' socketbufsize 8388608 ctrlchars 'yes'  encoding 'internal' timeroundnanos 'yes' crinstring 'off' maxerrors 3 LogDir '/tmp')")
         print("External Table loaded successfully")  
     except Exception as e:
         print(str(e))
