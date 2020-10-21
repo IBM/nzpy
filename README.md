@@ -138,7 +138,12 @@ onlySecured: The driver does not connect unless an SSL connection is available.
 ```
 Similarly, IBM Netezza server has above securityLevel. 
 
-Cases which would fail: Client tries to connect with 'Only secured' or 'Preferred secured' mode while server is 'Only Unsecured' mode. Client tries to connect with 'Only secured' or 'Preferred secured' mode while server is 'Preferred Unsecured' mode. Client tries to connect with 'Only Unsecured' or 'Preferred Unsecured' mode while server is 'Only Secured' mode. Client tries to connect with 'Only Unsecured' or 'Preferred Unsecured' mode while server is 'Preferred Secured' mode. 
+| Cases which would fail                                                                                               |
+| ---------------------------------------------------------                                                            |
+| Client tries to connect with 'Only secured' or 'Preferred secured' mode while server is 'Only Unsecured' mode        |
+| Client tries to connect with 'Only secured' or 'Preferred secured' mode while server is 'Preferred Unsecured' mode   |
+| Client tries to connect with 'Only Unsecured' or 'Preferred Unsecured' mode while server is 'Only Secured' mode      |
+| Client tries to connect with 'Only Unsecured' or 'Preferred Unsecured' mode while server is 'Preferred Secured' mode |
 
 Below is an example how you could pass securityLevel and ca certificate in connection string:
 ```
