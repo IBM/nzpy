@@ -17,19 +17,85 @@ This examples make use of the nzpy extensions to the DB-API 2.0 standard,
 
 Import nzpy, connect to the database, create a table, add some rows and then query the table:
 ```
+import nzpy
+
+conn = nzpy.connect(user="admin", password="password",host='localhost', port=5480, database="db1", securityLevel=1,logLevel=0)
+
 with conn.cursor() as cursor:
     try:
-        cursor.execute("create table t1(c1 numeric (10,5), c2 varchar(10),c3 nchar(5))")
-        print("table created successfully")
-    except:
-        print("Error while creating table")
+        cursor.execute("create table customerAddress(Id int, Name varchar(10), Address varchar(50), Email varchar(20) )")
+        print("Table customerAddress created successfully")
+    except Exception as e:
+        print(str(e))
+    
+    #insert data using parameters marker    
+    cursor.execute("insert into customerAddress values (?,?,?,?)", (1,'Jack','High street, London', 'jack4321@ibm.com'))
+    print(cursor.rowcount, 'rows inserted')
+    cursor.execute("insert into customerAddress values (?,?,?,?)", (2,'Tom', 'Park street, NY','tom1234@ibm.com'))
+    print(cursor.rowcount, 'rows inserted')
+    cursor.execute("insert into customerAddress values (?,?,?,?)", (3,'James', 'MG street, SG','james678@ibm.com'))
+    print(cursor.rowcount, 'rows inserted')
 
-    cursor.execute("insert into t1 values (?,?,?)", (456.54,'abcd','abc'))
-    print(cursor.rowcount, 'products inserted')
-    cursor.execute("update t1 set c2 = 'uvw' where c2 = ?", ('abcd',))
-    print(cursor.rowcount, 'products updated')
-    cursor.execute("delete from t1 where c2 = ?", ('uvw',))
-    print(cursor.rowcount, 'products deleted')
+    # Using parameters (IMPORTANT: YOU SHOULD USE TUPLE TO PASS PARAMETERS)
+    # Python note: a tuple with just one element must have a trailing comma, otherwise is just a enclosed variable
+    cursor.execute("select * from customerAddress where Id = ? and Name = ?", (1,'Jack'))
+    results = cursor.fetchall()
+    for c1,c2,c3,c4 in results:
+        print("Id = %s" % (c1))
+        print("Name = %s" % (c2))
+        print("Address = %s" % (c3))
+        print("Email = %s" % (c4))
+
+    try:
+        cursor.execute("create table customerData(Id int, FirstName varchar(20), LastName varchar(20), Age int)")
+        print("Table customerData created successfully")
+    except Exception as e:
+        print(str(e))
+    
+    #insert data using parameters marker in customerData table
+    cursor.execute("insert into customerData values (?,?,?,?)", (1,'Jack','Bentley', 42))
+    print(cursor.rowcount, 'rows inserted')
+    cursor.execute("insert into customerData values (?,?,?,?)", (2,'Tom', 'Banks',28))
+    print(cursor.rowcount, 'rows inserted')
+    cursor.execute("insert into customerData values (?,?,?,?)", (3,'James', 'Grant',30))
+    print(cursor.rowcount, 'rows inserted')
+
+    cursor.execute("select ca.Id,cd.FirstName, cd.LastName, cd.Age, ca.Address, ca.Email from customerAddress ca, customerData cd where ca.Id = ? and ca.Id = cd.Id", (2,))
+    results = cursor.fetchall()
+    for c1,c2,c3,c4,c5,c6 in results:
+        print("Id = %s" % (c1))
+        print("FirstName = %s" % (c2))
+        print("LastName = %s" % (c3))
+        print("Age = %s" % (c4))
+        print("Address = %s" % (c5))
+        print("Email = %s" % (c6))
+    
+    # rowcount before
+    cursor.execute("select count(*) from customerAddress")
+    results = cursor.fetchall()
+    for c1 in results:
+        print("Table row count is %s" % (c1))
+    
+    # using remotesource 'python', create named external table and unload table data 
+    try:
+        cursor.execute("create external table et1 '/tmp/et10' using ( remotesource 'python' delimiter '|') as select * from customerAddress")
+        print("Create external table created successfully")        
+    except Exception as e:
+        print(str(e))
+
+    # load data from external table onto user table
+    try:
+        cursor.execute("insert into customerAddress select * from external '/tmp/et10' using ( remotesource 'python' delimiter '|' socketbufsize 8388608 ctrlchars 'yes'  encoding 'internal' timeroundnanos 'yes' crinstring 'off' maxerrors 3 LogDir '/tmp')")
+        print("External Table loaded successfully")  
+    except Exception as e:
+        print(str(e))
+
+    # rowcount after load from external table
+    cursor.execute("select count(*) from customerAddress")
+    results = cursor.fetchall()
+    for c1 in results:
+        print("After load from External Table, table row count is %s" % (c1))
+
 ```
 
 ## Autocommit
@@ -72,7 +138,11 @@ onlySecured: The driver does not connect unless an SSL connection is available.
 ```
 Similarly, IBM Netezza server has above securityLevel. 
 
-Cases which would fail: Client tries to connect with 'Only secured' or 'Preferred secured' mode while server is 'Only Unsecured' mode. Client tries to connect with 'Only secured' or 'Preferred secured' mode while server is 'Preferred Unsecured' mode. Client tries to connect with 'Only Unsecured' or 'Preferred Unsecured' mode while server is 'Only Secured' mode. Client tries to connect with 'Only Unsecured' or 'Preferred Unsecured' mode while server is 'Preferred Secured' mode. 
+Cases which would fail :
+- Client tries to connect with 'Only secured' or 'Preferred secured' mode while server is 'Only Unsecured' mode
+- Client tries to connect with 'Only secured' or 'Preferred secured' mode while server is 'Preferred Unsecured' mode
+- Client tries to connect with 'Only Unsecured' or 'Preferred Unsecured' mode while server is 'Only Secured' mode
+- Client tries to connect with 'Only Unsecured' or 'Preferred Unsecured' mode while server is 'Preferred Secured' mode 
 
 Below is an example how you could pass securityLevel and ca certificate in connection string:
 ```
@@ -165,17 +235,24 @@ To run individual tests, you can run :
 
 ``` pytest -xv test_connection.py ```
 
+## Contribution and help
+All bug reports, feature requests and contributions are welcome at http://github.com/IBM/nzpy
+
 If you have any questions or issues you can create a new [issue here][issues].
 
 Pull requests are very welcome! Make sure your patches are well tested.
 Ideally create a topic branch for every separate change you make. For
 example:
 
-1. Fork the repo
+1. Fork the repo (git clone https://github.com/IBM/nzpy.git)
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Added some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
+6. Assign any one of the reviewers:
+   - abhishekjog
+   - sandippawar1412
+   - shabbir10july
 
 <!-- License and Authors is optional here, but gives you the ability to highlight who is involed in the project -->
 ## License 
@@ -197,3 +274,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
+
+[issues]: https://github.com/IBM/nzpy/issues/new
+
