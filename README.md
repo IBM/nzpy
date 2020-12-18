@@ -6,17 +6,22 @@ nzpy is a pure-Python IBM Netezza driver that complies with DB-API 2.0. It is te
 
 ## Installation
 To install nzpy using pip type:
-``` pip install nzpy ```
+```shell
+pip install nzpy
+```
 
 To install nzpy using setup.py:
-``` python setup.py install ```
+```shell
+python setup.py install
+```
 
 
 ## Interactive Example
 This examples make use of the nzpy extensions to the DB-API 2.0 standard,
 
 Import nzpy, connect to the database, create a table, add some rows and then query the table:
-```
+
+```python
 import nzpy
 
 conn = nzpy.connect(user="admin", password="password",host='localhost', port=5480, database="db1", securityLevel=1,logLevel=0)
@@ -100,7 +105,8 @@ with conn.cursor() as cursor:
 
 ## Autocommit
 As autocommit is on by default in IBM Netezza the default value of autocommit is on. It can be turned off by using the autocommit property of the connection.
-```
+
+```python
 conn.autocommit = False #autocommit is on by default. It can be turned off by using the autocommit property of the connection.
 with conn.cursor() as cursor:
     cursor.execute("create table t2(c1 numeric (10,5), c2 varchar(10),c3 nchar(5))")
@@ -110,7 +116,8 @@ with conn.cursor() as cursor:
 
 ## Notices
 IBM Netezza notices are stored in a deque called Connection.notices and added using the append() method. Here’s an example:
-```
+
+```python
 with conn.cursor() as cursor:
     cursor.execute("call CUSTOMER();")
     print(conn.notices)
@@ -120,12 +127,62 @@ NOTICE: The customer name is alpha
 
 ## Logging 
 You can set logLevel to control logging verbosity. In order to enable logging, you need to pass logLevel in your application using connection string. 
+
+```python
+conn = nzpy.connect(user="admin", password="password",host='localhost', port=5480,
+                       database="db1", securityLevel=0, logLevel=logging.DEBUG)
 ```
-conn = nzpy.connect(user="admin", password="password",host='localhost', port=5480, database="db1", securityLevel=0, logLevel=0)
+
+In addition there are 3 more options to control logging. One or more of these can be specified using `logOptions` argument to `nzpy.connect`
+
+1. Inherit the logging settings of the parent / caller 
+
+This is `nzpy.LogOptions.Inherit` option. The logging from nzpy is propgated to the logging configured by the parent
+
+```python
+logging.basicConfig(filename="myapplication.log")
+logging.info("...")
+# ..  
+conn = nzpy.connect(user="admin", password="password",host='localhost', port=5480,
+                    database="db1", securityLevel=0,
+                    logOptions=nzpy.LogOptions.Inherit)
+
+# .. all of nzpy logs will go to the inherited log settings
 ```
-You can configure logLevel as per your requirement. If you skip initializing logLevel, it would take default value as 0.  
-Valid values for 'logLevel' are : "0" for DEBUG , "1" for INFO and "2" for WARNING.
-Logfile would be created in the same directory/folder in which your application would run.
+
+2. Logging details to a logfile
+
+This is `nzpy.LogOptions.Logfile` option. The logging from nzpy is sent to 'nzpy.log' in the current directory. The file is rotated after 10 G. If `nzpy.LogOptions.Inherit` is set as well then both are honored
+
+```python
+logging.basicConfig(filename="myapplication.log")
+logging.info("...")
+# ..  
+conn1 = nzpy.connect(user="admin", password="password",host='localhost', port=5480,
+                     database="db1", securityLevel=0,
+                     logOptions=nzpy.LogOptions.Logfile)
+
+# .. all of conn1's nzpy logs will go to the nzpy.log only
+
+conn2 = nzpy.connect(user="admin", password="password",host='localhost', port=5480,
+                     database="db1", securityLevel=0,
+                     logOptions=nzpy.LogOptions.Logfile | nzpy.LogOptions.Inherit)
+
+# .. all of conn2's nzpy logs will go to the nzpy.log _and_ to myapplication.log
+
+
+conn3 = nzpy.connect(user="admin", password="password",host='localhost', port=5480,
+                     database="db1", securityLevel=0,
+                     logOptions=nzpy.LogOptions.Disabled)
+# .. conn3's logging is completely disabled
+
+```
+
+3. Disable nzpy logging
+
+This is `nzpy.LogOptions.Disabled` option
+
+You can configure logLevel as per your requirement. Any levels in standard `logging` module can be used. The default is `logging.INFO`
 
 
 ## SecurityLevel 
