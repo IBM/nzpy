@@ -22,10 +22,12 @@ from os import getpid, path
 from scramp import ScramClient
 import enum
 import logging 
+import logging.handlers 
 from ipaddress import (
     ip_address, IPv4Address, IPv6Address, ip_network, IPv4Network, IPv6Network)
 from datetime import timezone as Timezone
 
+import enum
 
 # Copyright (c) 2007-2009, Mathieu Fenniak
 # Copyright (c) The Contributors
@@ -61,6 +63,10 @@ __author__ = "Mathieu Fenniak"
 ZERO = Timedelta(0)
 BINARY = bytes
 
+class LogOptions(enum.IntFlag):
+    Disabled = 0
+    Inherit = enum.auto()  # inherit the logging settings from the caller
+    Logfile = enum.auto()  # add 
 
 class Interval():
     """An Interval represents a measurement of time.  In PostgreSQL, an
@@ -1144,7 +1150,7 @@ class Connection():
 
     def __init__(
             self, user, host, unix_sock, port, database, password, ssl,
-            securityLevel, timeout, application_name, max_prepared_statements, datestyle, logLevel, tcp_keepalive, char_varchar_encoding):
+            securityLevel, timeout, application_name, max_prepared_statements, datestyle, logLevel, tcp_keepalive, char_varchar_encoding, logOptions=LogOptions.Inherit):
         self._char_varchar_encoding = char_varchar_encoding
         self._client_encoding = "utf8"
         self._commands_with_count = (
@@ -1154,20 +1160,35 @@ class Connection():
         self.notices = deque(maxlen=100)
         self.parameter_statuses = deque(maxlen=100)
         self.max_prepared_statements = int(max_prepared_statements)
-        
-        if logLevel == 0:
-            logLevel= logging.DEBUG
-        if logLevel == 1:
-            logLevel= logging.INFO
-        if logLevel == 2:
-            logLevel= logging.WARNING
-                
-        filename = 'nzpy_' + Datetime.now().strftime("%H_%M_%S") + '.log'
-        logging.basicConfig(level=logLevel,
-                    format='%(asctime)s :%(filename)s:%(lineno)s - %(funcName)25s(): %(levelname)s: %(message)s',
-                    filename=filename,
-                    filemode='w')
-        
+
+        # honor logging.* log level constants if specified
+        if logLevel not in (logging.DEBUG, logging.ERROR, logging.CRITICAL, logging.FATAL, logging.WARN,
+                logging.WARNING):
+            if logLevel == 0:
+                logLevel= logging.DEBUG
+            elif logLevel == 1:
+                logLevel= logging.INFO
+            elif logLevel == 2:
+                logLevel= logging.WARNING
+            else: # else default to INFO
+                logLevel = logging.INFO
+
+        # if no logging has been setup by the caller, and no filename is specified
+        # then come up with a file name
+        self.log = logging.getLogger(f'nzpy.Connection[{database}]')
+        self.log.setLevel(logLevel)
+
+        if logOptions & LogOptions.Logfile:
+            h = logging.handlers.RotatingFileHandler('nzpy.log', maxBytes=1024**3*10)
+            fmt = logging.Formatter('%(asctime)s (%(process)s) [%(name)s:%(filename)s:%(lineno)s] %(levelname)s: %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S.000000 %Z')
+            h.setFormatter(fmt)
+            self.log.addHandler(h)
+        if not logOptions & LogOptions.Inherit:
+            # don't send log messages to the parent loggers
+            self.log.propagate = False
+
+
         if user is None:
             raise InterfaceError(
                 "The 'user' connection parameter cannot be None")
@@ -1211,7 +1232,7 @@ class Connection():
             self._sock = self._usock.makefile(mode="rwb")
             if tcp_keepalive:
                 self._usock.setsockopt(
-                    socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+                   socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         except socket.error as e:
             self._usock.close()
             raise InterfaceError("communication error", e)
@@ -1439,7 +1460,7 @@ class Connection():
             else: 
                 results = self._cursor.fetchall()
                 for c1, c2, c3, c4, c5 in results:
-                    logging.debug("c1 = %s, c2 = %s, c3 = %s, c4 = %s, c5 = %s" % (c1,c2,c3,c4,c5))
+                    self.log.debug("c1 = %s, c2 = %s, c3 = %s, c4 = %s, c5 = %s" % (c1,c2,c3,c4,c5))
                 
             client_info = "SET CLIENT_VERSION = '{}'"
             query = client_info.format(nzpy_client_version)
@@ -1451,21 +1472,21 @@ class Connection():
             else: 
                 results = self._cursor.fetchall()
                 for c1, c2 in results:
-                    logging.debug("c1 = %s, c2 = %s" % (c1,c2))
+                    self.log.debug("c1 = %s, c2 = %s" % (c1,c2))
                     
             if not self.execute(self._cursor, "select feature from _v_odbc_feature where spec_level = '3.5'", None):
                 return False
             else: 
                 results = self._cursor.fetchall()
                 for c1 in results:
-                    logging.debug("c1 = %s" % (c1))
+                    self.log.debug("c1 = %s" % (c1))
             
             if not self.execute(self._cursor, "select identifier_case, current_catalog, current_user", None):
                 return False
             else: 
                 results = self._cursor.fetchall()
                 for c1, c2, c3 in results:
-                    logging.debug("c1 = %s, c2 = %s, c3 = %s" % (c1,c2,c3))
+                    self.log.debug("c1 = %s, c2 = %s, c3 = %s" % (c1,c2,c3))
                 
             return True
    
@@ -1490,7 +1511,7 @@ class Connection():
             COPY_IN_RESPONSE: self.handle_COPY_IN_RESPONSE,
             COPY_OUT_RESPONSE: self.handle_COPY_OUT_RESPONSE}
         
-        hs = handshake.Handshake(self._usock, self._sock, ssl)
+        hs = handshake.Handshake(self._usock, self._sock, ssl, self.log)
         response = hs.startup(database, securityLevel, user, password)
         
         if response is not False: 
@@ -1504,7 +1525,7 @@ class Connection():
         code = self.error = None
         
         if not conn_send_query():
-            logging.warning("Error sending initial setup queries")
+            self.log.warning("Error sending initial setup queries")
             
         self.commandNumber = 0
                 
@@ -1741,9 +1762,9 @@ class Connection():
         args = make_args(vals)
         placeholderCount = query.count('?')
         if len(args) >= 65536 :
-                logging.warning("got %d parameters but PostgreSQL only supports 65535 parameters", len(args))
+                self.log.warning("got %d parameters but PostgreSQL only supports 65535 parameters", len(args))
         if len(args) != placeholderCount :
-                logging.warning("got %d parameters but the statement requires %d", len(args), placeholderCount)
+                self.log.warning("got %d parameters but the statement requires %d", len(args), placeholderCount)
 	
         for arg in args:
             if isinstance(arg, str):
@@ -1793,7 +1814,7 @@ class Connection():
         self._write(buf)
         self._flush()
         
-        logging.debug("Buffer sent to nps:%s", buf)
+        self.log.debug("Buffer sent to nps:%s", buf)
         
         self.status = CONN_EXECUTING
         
@@ -1811,14 +1832,14 @@ class Connection():
         
         while(1):
             response = self._read(1)
-            logging.debug("Backend response: %s",response)
+            self.log.debug("Backend response: %s",response)
             self._read(4)
             
             if response == COMMAND_COMPLETE:  # portal query command, no tuples returned 
                 length = i_unpack(self._read(4))[0]
                 data = self._read(length)
                 self.handle_COMMAND_COMPLETE(data,cursor)
-                logging.debug ("Response received from backend: %s", str(data,self._client_encoding))
+                self.log.debug ("Response received from backend: %s", str(data,self._client_encoding))
                 continue
             if response == READY_FOR_QUERY:
                 return True
@@ -1830,12 +1851,12 @@ class Connection():
                 pass
             if response == b"P":
                 length = i_unpack(self._read(4))[0]
-                logging.debug ("Response received from backend:%s", str(self._read(length),self._client_encoding))
+                self.log.debug ("Response received from backend:%s", str(self._read(length),self._client_encoding))
                 continue
             if response == ERROR_RESPONSE:
                 length = i_unpack(self._read(4))[0]
                 self.error = str(self._read(length),self._client_encoding)
-                logging.debug ("Response received from backend:%s", self.error)
+                self.log.debug ("Response received from backend:%s", self.error)
                 return False
             if response == ROW_DESCRIPTION:
                 length = i_unpack(self._read(4))[0]
@@ -1867,13 +1888,13 @@ class Connection():
                 fname = str(fnameBuf,self._client_encoding)
                 try:
                     fh = open(fname, "w+")
-                    logging.debug("Successfully opened file: %s", fname)
+                    self.log.debug("Successfully opened file: %s", fname)
                     #file open successfully, send status back to datawriter                
                     buf = bytearray(i_pack(0))
                     self._write(buf)
                     self._flush()     
                 except:
-                    logging.warning("Error while opening file")
+                    self.log.warning("Error while opening file")
             
             if response == b"U": # handle unload data 
                 self.receiveAndWriteDatatoExternal(fname, fh)
@@ -1883,7 +1904,7 @@ class Connection():
                 
             if response == b"x": # handle Ext Tbl parser abort 
                 self._read(4)
-                logging.warning("Error operation cancel")
+                self.log.warning("Error operation cancel")
             
             if response == b"e":
             
@@ -1902,18 +1923,18 @@ class Connection():
                 filename = str(filenameBuf,self._client_encoding)
                 logType = i_unpack(self._read(4))[0]
                 if not self.getFileFromBE(logDir, filename, logType):
-                    logging.debug("Error in writing file received from BE")
+                    self.log.debug("Error in writing file received from BE")
                 continue
             
             if response == NOTICE_RESPONSE:            
                 length = i_unpack(self._read(4))[0]
                 self.notices = str(self._read(length),self._client_encoding)
-                logging.debug ("Response received from backend:%s", self.notices)                              
+                self.log.debug ("Response received from backend:%s", self.notices)                              
             
             if response == b"I":         
                 length = i_unpack(self._read(4))[0]
                 self.notices = str(self._read(length),self._client_encoding)
-                logging.debug ("Response received from backend:%s", self.notices)                
+                self.log.debug ("Response received from backend:%s", self.notices)                
                 cursor._cached_rows.append([])
      
     def Res_get_dbos_column_descriptions(self, data, tupdesc):
@@ -1950,11 +1971,11 @@ class Connection():
         numFields = tupdesc.numFields
         
         length = i_unpack(self._read(4))[0]
-        logging.debug("Length of the message from backend:%s", length)
+        self.log.debug("Length of the message from backend:%s", length)
         length = i_unpack(self._read(4))[0]
-        logging.debug("Length of the message from backend:%s", length)
+        self.log.debug("Length of the message from backend:%s", length)
         data = self._read(length)
-        logging.debug("Actual message is: %s", data)
+        self.log.debug("Actual message is: %s", data)
         
         if length > tupdesc.maxRecordSize :
             maxRecordSize = length
@@ -1986,7 +2007,7 @@ class Connection():
             # a bitmap with value of 1 denotes null column
             if bitmap[tupdesc.field_physField[field_lf]] == 1 and tupdesc.nullsAllowed != 0 :
                 row.append(None)
-                logging.debug("field=%d, value= NULL", cur_field+1)
+                self.log.debug("field=%d, value= NULL", cur_field+1)
                 cur_field += 1
                 field_lf +=1
                 continue
@@ -2021,49 +2042,49 @@ class Connection():
             if fldtype == NzTypeChar:
                 value = str(fieldDataP[:fldlen], self._char_varchar_encoding)
                 row.append(value)
-                logging.debug("field=%d, datatype=CHAR, value=%s", cur_field+1,value)                
+                self.log.debug("field=%d, datatype=CHAR, value=%s", cur_field+1,value)                
                 
             if fldtype == NzTypeNChar or fldtype == NzTypeNVarChar:
                 cursize  = int.from_bytes(fieldDataP[0:2], 'little') - 2
                 value = str(fieldDataP[2:cursize+2], self._client_encoding)
                 row.append(value)
-                logging.debug("field=%d, datatype=%s, value=%s", cur_field+1,dataType[fldtype], value)                
+                self.log.debug("field=%d, datatype=%s, value=%s", cur_field+1,dataType[fldtype], value)                
                 
             if fldtype == NzTypeVarChar or fldtype == NzTypeVarFixedChar or fldtype == NzTypeGeometry or fldtype == NzTypeVarBinary:
                 cursize  = int.from_bytes(fieldDataP[0:2], 'little') - 2
                 value = str(fieldDataP[2:cursize+2], self._char_varchar_encoding)
                 row.append(value)
-                logging.debug("field=%d, datatype=%s, value=%s", cur_field+1,dataType[fldtype], value)
+                self.log.debug("field=%d, datatype=%s, value=%s", cur_field+1,dataType[fldtype], value)
                 
             if fldtype == NzTypeInt8:  #int64
                 value = int.from_bytes(fieldDataP[:fldlen], byteorder='little', signed=True)
                 row.append(value)
-                logging.debug("field=%d, datatype=NzTypeInt8, value=%s", cur_field+1, value)
+                self.log.debug("field=%d, datatype=NzTypeInt8, value=%s", cur_field+1, value)
             
             if fldtype == NzTypeInt:   #int32
                 value = int.from_bytes(fieldDataP[:fldlen], byteorder='little', signed=True)
                 row.append(value)
-                logging.debug("field=%d, datatype=NzTypeInt4, value=%s", cur_field+1, value)
+                self.log.debug("field=%d, datatype=NzTypeInt4, value=%s", cur_field+1, value)
                 
             if fldtype == NzTypeInt2:  #int16
                 value = int.from_bytes(fieldDataP[:fldlen], byteorder='little', signed=True)
                 row.append(value)
-                logging.debug("field=%d, datatype=NzTypeInt2, value=%s", cur_field+1, value)
+                self.log.debug("field=%d, datatype=NzTypeInt2, value=%s", cur_field+1, value)
                 
             if fldtype == NzTypeInt1:  #int8
                 value = int.from_bytes(fieldDataP[:fldlen], byteorder='little', signed=True)
                 row.append(value)
-                logging.debug("field=%d, datatype=NzTypeInt1, value=%s", cur_field+1, value)
+                self.log.debug("field=%d, datatype=NzTypeInt1, value=%s", cur_field+1, value)
                 
             if fldtype == NzTypeDouble: 
                 value = struct.unpack('d', fieldDataP[:fldlen])[0]
                 row.append(value)
-                logging.debug("field=%d, datatype=NzTypeDouble, value=%s", cur_field+1, value)
+                self.log.debug("field=%d, datatype=NzTypeDouble, value=%s", cur_field+1, value)
                 
             if fldtype == NzTypeFloat:
                 value = struct.unpack('f', fieldDataP[:fldlen])[0]
                 row.append(value)
-                logging.debug("field=%d, datatype=NzTypeFloat, value=%s", cur_field+1, value)                
+                self.log.debug("field=%d, datatype=NzTypeFloat, value=%s", cur_field+1, value)                
             
             if fldtype == NzTypeDate:                   
                 workspace = int.from_bytes(fieldDataP[:fldlen], byteorder='little', signed=True)
@@ -2071,7 +2092,7 @@ class Connection():
                 date_format = "{0:02d}-{1:02d}-{2:02d}"
                 value = date_format.format(date_value[0],date_value[1],date_value[2])
                 row.append(value)
-                logging.debug("field=%d, datatype=DATE, value=%s", cur_field+1, value)
+                self.log.debug("field=%d, datatype=DATE, value=%s", cur_field+1, value)
                 
             if fldtype == NzTypeTime:
                 workspace = int.from_bytes(fieldDataP[:fldlen], byteorder='little', signed=True)
@@ -2079,21 +2100,21 @@ class Connection():
                 time_format = "{0:02d}:{1:02d}:{2:02d}"
                 value = time_format.format(time_value[0],time_value[1],time_value[2])
                 row.append(value)
-                logging.debug("field=%d, datatype=TIME, value=%s", cur_field+1, value)
+                self.log.debug("field=%d, datatype=TIME, value=%s", cur_field+1, value)
                 
             if fldtype == NzTypeInterval:
                 interval_time = int.from_bytes(fieldDataP[:fldlen-4], byteorder='little', signed=True)
                 interval_month = int.from_bytes(fieldDataP[fldlen-4:fldlen], byteorder='little', signed=True)
                 value = IntervalToText(interval_time,interval_month)
                 row.append(value)
-                logging.debug("field=%d, datatype=INTERVAL, value=%s", cur_field+1, value)
+                self.log.debug("field=%d, datatype=INTERVAL, value=%s", cur_field+1, value)
                 
             if fldtype == NzTypeTimeTz:
                 timetz_time = int.from_bytes(fieldDataP[:fldlen-4], byteorder='little', signed=True)                
                 timetz_zone = int.from_bytes(fieldDataP[fldlen-4:fldlen], byteorder='little', signed=True)                
                 value = timetz_out_timetzadt(timetz_time, timetz_zone)
                 row.append(value)
-                logging.debug("field=%d, datatype=TIMETZ, value=%s", cur_field+1, value)
+                self.log.debug("field=%d, datatype=TIMETZ, value=%s", cur_field+1, value)
                 
             if fldtype == NzTypeTimestamp:
                 if fldlen == 8 :
@@ -2111,7 +2132,7 @@ class Connection():
                 time_format = "{0:02d}-{1:02d}-{2:02d} {3:02d}:{4:02d}:{5:02d}.{6:02d}"
                 value = time_format.format(timestamp_value[0],timestamp_value[1],timestamp_value[2],timestamp_value[3],timestamp_value[4],timestamp_value[5],timestamp_value[6])
                 row.append(value)
-                logging.debug("field=%d, datatype=TIMESTAMP, value=%s", cur_field+1, value)            
+                self.log.debug("field=%d, datatype=TIMESTAMP, value=%s", cur_field+1, value)            
             
             if fldtype == NzTypeNumeric:
                 
@@ -2140,12 +2161,12 @@ class Connection():
                 buffer = numeric.PYTHON_numeric_load_var(dataBuffer, prec, scale, count)
                 value = numeric.get_str_from_var(buffer, buffer.rscale)
                 row.append(value)
-                logging.debug("field=%d, datatype=NUMERIC, value=%s", cur_field+1, value) 
+                self.log.debug("field=%d, datatype=NUMERIC, value=%s", cur_field+1, value) 
                 
             if fldtype == NzTypeBool:                
                 value = fieldDataP[:fldlen] == b'\x01'
                 row.append(value)
-                logging.debug("field=%d, datatype=BOOL, value=%s", cur_field+1, value)                
+                self.log.debug("field=%d, datatype=BOOL, value=%s", cur_field+1, value)                
            
             cur_field += 1
             field_lf += 1
@@ -2200,7 +2221,7 @@ class Connection():
             try: 
                 status = i_unpack(self._read(4))[0]
             except:
-                logging.warning("Error while retrieving status, closing unload file")
+                self.log.warning("Error while retrieving status, closing unload file")
             finally:
                 fh.close()     
 		
@@ -2211,14 +2232,14 @@ class Connection():
                     blockBuffer = str(self._read(numBytes),self._client_encoding) 
                     fh = open(fname, "w+")
                     fh.write(blockBuffer)
-                    logging.info("Successfully written data into file")
+                    self.log.info("Successfully written data into file")
                 except: 
-                    logging.warning("Error in writing data to file")
+                    self.log.warning("Error in writing data to file")
                 continue
 
             if status ==  EXTAB_SOCK_DONE:
                 fh.close()
-                logging.info("unload - done receiving data")
+                self.log.info("unload - done receiving data")
                 break
 
             if status == EXTAB_SOCK_ERROR:
@@ -2229,11 +2250,11 @@ class Connection():
                 len = h_unpack(self._read(2))[0]
                 errorObject = str(self._read(length),self._client_encoding)
 
-                logging.warning("unload - ErrorMsg: %s", errorMsg)
-                logging.warning("unload - ErrorObj: %s", errorObject)
+                self.log.warning("unload - ErrorMsg: %s", errorMsg)
+                self.log.warning("unload - ErrorObj: %s", errorObject)
 
                 fh.close()
-                logging.debug("unload - done receiving data")
+                self.log.debug("unload - done receiving data")
                 return
 
             else:
@@ -2266,11 +2287,11 @@ class Connection():
         format = i_unpack(self._read(4))[0]
         blockSize = i_unpack(self._read(4))[0]
         byteread = blockSize
-        logging.info("Format=%d Block size=%d Host version=%d ", format, blockSize, hostversion)
+        self.log.info("Format=%d Block size=%d Host version=%d ", format, blockSize, hostversion)
 
         try: 
             filehandle = open(filename,'r')
-            logging.info("Successfully opened External file to read:%s", filename)            
+            self.log.info("Successfully opened External file to read:%s", filename)            
             while True :                
                 data = filehandle.read(blockSize)
                 if not data:
@@ -2289,14 +2310,14 @@ class Connection():
                     val.extend(data.encode('utf8'))
                     self._write(val)
                     self._flush()
-                logging.debug("No. of bytes sent to BE:%s", len(data))                
+                self.log.debug("No. of bytes sent to BE:%s", len(data))                
             val = bytearray(i_pack(EXTAB_SOCK_DONE))  
             self._write(val)
             self._flush() 
-            logging.info("sent EXTAB_SOCK_DONE to reader")
+            self.log.info("sent EXTAB_SOCK_DONE to reader")
                 
         except:
-            logging.warning("Error opening file")
+            self.log.warning("Error opening file")
 	
  #################################################################################
  # Function: getFileFromBE - This Routine opens a file in the temp directory
@@ -2341,9 +2362,9 @@ class Connection():
             if status :
                 try:
                     fh.write(dataBuffer)
-                    logging.info("Successfully written data into file: %s", fullpath)	                    
+                    self.log.info("Successfully written data into file: %s", fullpath)	                    
                 except: 
-                    logging.warning("Error in writing data to file")
+                    self.log.warning("Error in writing data to file")
                     status = False
 
         fh.close()	

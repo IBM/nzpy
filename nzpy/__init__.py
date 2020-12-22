@@ -4,7 +4,7 @@ from nzpy.core import (
     ArrayContentNotHomogenousError, ArrayDimensionsNotConsistentError,
     ArrayContentNotSupportedError, Connection, Cursor, Binary, Date,
     DateFromTicks, Time, TimeFromTicks, Timestamp, TimestampFromTicks, BINARY,
-    Interval, PGEnum, PGJson, PGJsonb, PGTsvector, PGText, PGVarchar)
+    Interval, PGEnum, PGJson, PGJsonb, PGTsvector, PGText, PGVarchar, LogOptions)
 from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
@@ -43,11 +43,11 @@ __author__ = "Mathieu Fenniak"
 def connect(
         user, host='localhost', unix_sock=None, port=5432, database=None, 
         password=None, ssl=None, securityLevel= 0, timeout=None, application_name=None,
-        max_prepared_statements=1000, datestyle = 'ISO', logLevel = 0, tcp_keepalive=True, char_varchar_encoding='latin'):
+        max_prepared_statements=1000, datestyle = 'ISO', logLevel = 0, tcp_keepalive=True, char_varchar_encoding='latin', logOptions=LogOptions.Inherit):
 
     return Connection(
         user, host, unix_sock, port, database, password, ssl, securityLevel, timeout,
-        application_name, max_prepared_statements, datestyle, logLevel, tcp_keepalive,char_varchar_encoding)
+        application_name, max_prepared_statements, datestyle, logLevel, tcp_keepalive,char_varchar_encoding, logOptions)
 
 
 apilevel = "2.0"

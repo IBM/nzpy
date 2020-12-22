@@ -61,7 +61,7 @@ NPSCLIENT_TYPE_PYTHON = 13
 
 class Handshake():
 
-    def __init__(self, _usock, _sock, ssl):
+    def __init__(self, _usock, _sock, ssl, log):
         
         self._hsVersion = None
         self._protocol1 = None
@@ -69,6 +69,7 @@ class Handshake():
         self._usock = _usock
         self._sock = _sock
         self.ssl_params = ssl
+        self.log = log
         
         # guardium related information
         self.guardium_clientOS = system()
@@ -80,20 +81,20 @@ class Handshake():
    
         #Negotiate the handshake version (connection protocol)
         if not self.conn_handshake_negotiate(self._sock.write, self._sock.read, self._sock.flush, self._hsVersion, self._protocol2):
-            logging.info("Handshake negotiation unsuccessful")
+            self.log.info("Handshake negotiation unsuccessful")
             return False
             
-        logging.info("Sending handshake information to server")
+        self.log.info("Sending handshake information to server")
         if not self.conn_send_handshake_info(self._sock.write, self._sock.read, self._sock.flush, database, securityLevel, self._hsVersion, self._protocol1, self._protocol2, user):  
-            logging.warning("Error in conn_send_handshake_info")
+            self.log.warning("Error in conn_send_handshake_info")
             return False
             
         if not self.conn_authenticate(self._sock.write, self._sock.read, self._sock.flush, password):
-            logging.warning("Error in conn_authenticate")
+            self.log.warning("Error in conn_authenticate")
             return False
         
         if not self.conn_connection_complete(self._sock.read):
-            logging.warning("Error in conn_connection_complete")
+            self.log.warning("Error in conn_connection_complete")
             return False
             
         return self._sock    
@@ -101,7 +102,7 @@ class Handshake():
     def conn_handshake_negotiate(self, _write, _read, _flush, _hsVersion, _protocol2):
     
         version = CP_VERSION_6
-        logging.debug ("Latest-handshake version (conn-protocol) = %s",version)
+        self.log.debug ("Latest-handshake version (conn-protocol) = %s",version)
         
         while(1):
             
@@ -120,17 +121,17 @@ class Handshake():
             if version == CP_VERSION_2:
                 version = CP_VERSION_2
             
-            logging.debug("sending version: %s", version)
+            self.log.debug("sending version: %s", version)
             val = bytearray( core.h_pack(HSV2_CLIENT_BEGIN) + core.h_pack(version))
             _write(core.i_pack(len(val) + 4))
             _write(val)
             _flush()
             
-            logging.info("sent handshake negotiation block successfully")
+            self.log.info("sent handshake negotiation block successfully")
             
             beresp = _read(1)
             
-            logging.debug("Got response: %s", beresp)
+            self.log.debug("Got response: %s", beresp)
             
             if beresp == b'N':
                 self._hsVersion = version
@@ -147,10 +148,10 @@ class Handshake():
                 if version == b'5':
                     version = CP_VERSION_5
             elif beresp == b"E":
-                logging.warning("Bad attribute value error")
+                self.log.warning("Bad attribute value error")
                 return False
             else:
-                logging.warning("Bad protocol error")
+                self.log.warning("Bad protocol error")
                 return False
     
     def conn_send_handshake_info(self, _write, _read, _flush, _database, securityLevel, _hsVersion, _protocol1, _protocol2, user):
@@ -180,7 +181,7 @@ class Handshake():
         if _database is not None:
             if isinstance(_database, str):
                 db = _database.encode('utf8')
-            logging.info("Database name: %s", db)
+            self.log.info("Database name: %s", db)
             
             val = bytearray( core.h_pack(HSV2_DB))
             val.extend(db + core.NULL_BYTE)
@@ -189,14 +190,14 @@ class Handshake():
             _flush()
         
         beresp = _read(1)
-        logging.debug("Backend response: %s", beresp)
+        self.log.debug("Backend response: %s", beresp)
         if beresp == b'N':
             return True
         elif beresp == core.ERROR_RESPONSE:
-            logging.warning("ERROR_AUTHOR_BAD")
+            self.log.warning("ERROR_AUTHOR_BAD")
             return False
         else:
-            logging.warning("Unknown response")
+            self.log.warning("Unknown response")
             return False
     
     def conn_set_next_dataprotocol(self, protocol1, _protocol2):
@@ -216,7 +217,7 @@ class Handshake():
         else: 
             return False
             
-        logging.debug("Connection protocol set to : %s %s",self._protocol1, self._protocol2)
+        self.log.debug("Connection protocol set to : %s %s",self._protocol1, self._protocol2)
         return True
     
     def conn_secure_session(self, securityLevel):
@@ -234,7 +235,7 @@ class Handshake():
                 #      2	Preferred Secured session
                 #      3	Only Secured session
                 #
-                logging.debug("Security Level requested = %s",currSecLevel)
+                self.log.debug("Security Level requested = %s",currSecLevel)
                 opcode = information
                 
             if information == HSV2_SSL_CONNECT:
@@ -249,14 +250,14 @@ class Handshake():
                 try:
                     self._usock = ssl_context.wrap_socket(self._usock)                        
                     self._sock = self._usock.makefile(mode="rwb")
-                    logging.info("Secured Connect Success")
+                    self.log.info("Secured Connect Success")
                 except ssl.SSLError:
-                    logging.warning("Problem establishing secured session")
+                    self.log.warning("Problem establishing secured session")
                     return False    
                 
             if information != 0:
                 beresp = self._sock.read(1)
-                logging.debug("Got response =%s", beresp)
+                self.log.debug("Got response =%s", beresp)
                 if beresp == b'S':
                     #The backend sends 'S' only in 3 cases
                     #Client requests strict SSL and backend supports it.
@@ -285,17 +286,17 @@ class Handshake():
                     
                     except ssl.SSLError:
                         if currSecLevel == 2:
-                            logging.debug("Problem establishing secured session")
-                            logging.debug("Attempting unsecured session")
+                            self.log.debug("Problem establishing secured session")
+                            self.log.debug("Attempting unsecured session")
                             currSecLevel = 1
                             information = HSV2_SSL_NEGOTIATE
                             continue
-                        logging.warning("Problem establishing secured session")
+                        self.log.warning("Problem establishing secured session")
                         return False
     
                 if beresp == b'N':
                     if information == HSV2_SSL_NEGOTIATE:
-                        logging.info("Attempting unsecured session")
+                        self.log.info("Attempting unsecured session")
                     information = 0
                     return True
                     
@@ -305,7 +306,7 @@ class Handshake():
                     #we will have to attempt a non secured session. If this also
                     #fails, we have to error out. To achieve this, we now negotiate
                     #for essential non-secured session
-                    logging.warning("Error: connection failed")
+                    self.log.warning("Error: connection failed")
                     return False         
     
     def conn_send_handshake_version2(self, _write, _read, _flush, _protocol1, _protocol2, _hsVersion, user):
@@ -326,7 +327,7 @@ class Handshake():
             _write(val)
             _flush()
             beresp = _read(1)
-            logging.debug("Backend response: %s",beresp)
+            self.log.debug("Backend response: %s",beresp)
             if beresp == b'N':
                 if information == HSV2_PROTOCOL:
                     val = bytearray( core.h_pack(information) + core.h_pack(_protocol1) + core.h_pack(_protocol2))
@@ -360,7 +361,7 @@ class Handshake():
                     return True
                 
             elif beresp == core.ERROR_RESPONSE:
-                logging.warning("ERROR_CONN_FAIL")
+                self.log.warning("ERROR_CONN_FAIL")
                 return False                
     
     def conn_send_handshake_version4(self, _write, _read, _flush, _protocol1, _protocol2, _hsVersion, user):
@@ -381,33 +382,33 @@ class Handshake():
             _write(val)
             _flush()
             beresp = _read(1)
-            logging.debug("Backend response: %s",beresp)
+            self.log.debug("Backend response: %s",beresp)
             if beresp == b'N':             
                 if information == HSV2_APPNAME: # App name 
                     val = bytearray( core.h_pack(information))
                     val.extend(self.guardium_applName.encode('utf8') + core.NULL_BYTE)                                 
-                    logging.debug("Appname :%s", self.guardium_applName)
+                    self.log.debug("Appname :%s", self.guardium_applName)
                     information = HSV2_CLIENT_OS
                     continue
 
                 if information == HSV2_CLIENT_OS: # OS name
                     val = bytearray( core.h_pack(information))
                     val.extend(self.guardium_clientOS.encode('utf8') + core.NULL_BYTE)                                 
-                    logging.debug("Client OS :%s", self.guardium_clientOS)
+                    self.log.debug("Client OS :%s", self.guardium_clientOS)
                     information = HSV2_CLIENT_HOST_NAME
                     continue
 
                 if information == HSV2_CLIENT_HOST_NAME: # Client Host name
                     val = bytearray( core.h_pack(information))
                     val.extend(self.guardium_clientHostName.encode('utf8') + core.NULL_BYTE)                                 
-                    logging.debug("Client hostname :%s", self.guardium_clientHostName)
+                    self.log.debug("Client hostname :%s", self.guardium_clientHostName)
                     information = HSV2_CLIENT_OS_USER
                     continue
 
                 if information == HSV2_CLIENT_OS_USER: # client OS User name 
                     val = bytearray( core.h_pack(information))
                     val.extend(self.guardium_clientOSUser.encode('utf8') + core.NULL_BYTE)                                 
-                    logging.debug("Client OS user :%s", self.guardium_clientOSUser)
+                    self.log.debug("Client OS user :%s", self.guardium_clientOSUser)
                     information = HSV2_PROTOCOL
                     continue
 
@@ -443,7 +444,7 @@ class Handshake():
                     return True
                 
             elif beresp == core.ERROR_RESPONSE:
-                logging.warning("ERROR_CONN_FAIL")
+                self.log.warning("ERROR_CONN_FAIL")
                 return False                
 
     def conn_authenticate(self, _write, _read, _flush, password):
@@ -454,30 +455,30 @@ class Handshake():
             password = password
             
         beresp = _read(1)
-        logging.debug("Got response: %s", beresp)
+        self.log.debug("Got response: %s", beresp)
         
         if beresp != core.AUTHENTICATION_REQUEST :
-            logging.warning("Authentication error")
+            self.log.warning("Authentication error")
             return False
         
-        logging.debug("auth got 'R' - request for password")
+        self.log.debug("auth got 'R' - request for password")
         areq = core.i_unpack(_read(4))[0]
-        logging.debug("areq =%s",areq)
+        self.log.debug("areq =%s",areq)
         
         if areq == AUTH_REQ_OK:
-            logging.info("success")
+            self.log.info("success")
             return True
         
         if areq == AUTH_REQ_PASSWORD:
-            logging.info("Plain password requested")
+            self.log.info("Plain password requested")
             _write(core.i_pack(len(password + core.NULL_BYTE) + 4))
             _write(password + core.NULL_BYTE)
             _flush()
         
         if areq == AUTH_REQ_MD5:
-            logging.info("Password type is MD5")
+            self.log.info("Password type is MD5")
             salt = _read(2)
-            logging.debug("Salt =%s", salt)
+            self.log.debug("Salt =%s", salt)
             if password is None:
                 raise InterfaceError(
                     "server requesting MD5 password authentication, but no "
@@ -485,7 +486,7 @@ class Handshake():
             md5encoded = md5(salt+password)
             md5pwd = base64.standard_b64encode(md5encoded.digest())
             pwd = md5pwd.rstrip(b"=")
-            logging.debug("md5 encrypted password is =%s",pwd)
+            self.log.debug("md5 encrypted password is =%s",pwd)
             
             # Int32 - Message length including self.
             # String - The password.  Password may be encrypted.
@@ -494,9 +495,9 @@ class Handshake():
             _flush()
         
         if areq == AUTH_REQ_SHA256:
-            logging.info("Password type is SSH")
+            self.log.info("Password type is SSH")
             salt = _read(2)
-            logging.debug("Salt =%s", salt)
+            self.log.debug("Salt =%s", salt)
             if password is None:
                 raise InterfaceError(
                     "server requesting MD5 password authentication, but no "
@@ -504,7 +505,7 @@ class Handshake():
             sha256encoded = sha256(salt+password)
             sha256pwd = base64.standard_b64encode(sha256encoded.digest())
             pwd = sha256pwd.rstrip(b"=")
-            logging.debug("sha256 encrypted password is =%s", pwd)
+            self.log.debug("sha256 encrypted password is =%s", pwd)
             
             # Int32 - Message length including 
             # String - The password.  Password may be encrypted.
@@ -513,36 +514,36 @@ class Handshake():
             _flush()
             
         if areq == AUTH_REQ_KRB5:
-            logging.info("krb encryption requested from backend")
+            self.log.info("krb encryption requested from backend")
     
         return True
     
     def conn_connection_complete(self, _read):            
         while (1):
             response = _read(1)
-            logging.debug("backend response: %s", response)
+            self.log.debug("backend response: %s", response)
             
             if response != core.AUTHENTICATION_REQUEST:
                 _read(8) # do not use just ignore
             
             if response == core.AUTHENTICATION_REQUEST:
                 areq = core.i_unpack(_read(4))[0]
-                logging.debug("backend response: %s", areq)
+                self.log.debug("backend response: %s", areq)
     
             if response == core.BACKEND_KEY_DATA:
                 
                 areq = core.i_unpack(_read(4))[0]
-                logging.debug("Backend response PID: %s", areq)
+                self.log.debug("Backend response PID: %s", areq)
     
                 areq = core.i_unpack(_read(4))[0]
-                logging.debug("Backend response KEY: %s", areq)
+                self.log.debug("Backend response KEY: %s", areq)
     
             if response == core.READY_FOR_QUERY:
-                logging.info("Authentication Successful")
+                self.log.info("Authentication Successful")
                 return True
             
             if response == core.ERROR_RESPONSE:
-                logging.warning("Error occured, server response")
+                self.log.warning("Error occured, server response")
                 return False
    
     
