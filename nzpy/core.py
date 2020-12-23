@@ -2245,10 +2245,10 @@ class Connection():
             if status == EXTAB_SOCK_ERROR:
     
                 len = h_unpack(self._read(2))[0]
-                errorMsg = str(self._read(length),self._client_encoding)
+                errorMsg = str(self._read(len),self._client_encoding)
 
                 len = h_unpack(self._read(2))[0]
-                errorObject = str(self._read(length),self._client_encoding)
+                errorObject = str(self._read(len),self._client_encoding)
 
                 self.log.warning("unload - ErrorMsg: %s", errorMsg)
                 self.log.warning("unload - ErrorObj: %s", errorObject)
