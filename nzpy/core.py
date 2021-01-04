@@ -1929,16 +1929,22 @@ class Connection():
             if response == NOTICE_RESPONSE:            
                 length = i_unpack(self._read(4))[0]
                 notice = str(self._read(length),self._client_encoding)
+                if notice.startswith('NOTICE:'):
+                    notice = notice[len('NOTICE:'):]
+                notice = notice.strip().rstrip('\x00')
                 cursor.notices.append(notice)
                 self.log.debug ("Response received from backend:%s", notice)                              
             
             if response == b"I":         
                 length = i_unpack(self._read(4))[0]
                 notice = str(self._read(length),self._client_encoding)
+                if notice.startswith('NOTICE:'):
+                    notice = notice[len('NOTICE:'):]
+                notice = notice.strip().rstrip('\x00')
                 cursor.notices.append(notice)
                 self.log.debug ("Response received from backend:%s", notice)
                 cursor._cached_rows.append([])
-     
+
     def Res_get_dbos_column_descriptions(self, data, tupdesc):
         
         data_idx = 0 
