@@ -122,7 +122,7 @@ with conn.cursor() as cursor:
     cursor.execute("call CUSTOMER();")
     print(cursor.notices)
 
-NOTICE: The customer name is alpha
+The customer name is alpha
 
 ```
 If backend returns multiple notices:
