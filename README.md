@@ -133,8 +133,8 @@ with conn.cursor() as cursor:
     for notice in cursor.notices:
         print(notice)
 
-NOTICE: The customer name is alpha
-NOTICE: The customer location is beta
+The customer name is alpha
+The customer location is beta
 
 ```
 
