@@ -777,6 +777,7 @@ class Cursor():
         self.ps = None
         self._row_count = -1
         self._cached_rows = deque()
+        self.notices = deque()
 
     def __enter__(self):
         return self
@@ -1157,7 +1158,6 @@ class Connection():
             b"INSERT", b"DELETE", b"UPDATE"
             )
         self.notifications = deque(maxlen=100)
-        self.notices = deque(maxlen=100)
         self.parameter_statuses = deque(maxlen=100)
         self.max_prepared_statements = int(max_prepared_statements)
 
@@ -1491,7 +1491,6 @@ class Connection():
             return True
    
         self.message_types = {
-            NOTICE_RESPONSE: self.handle_NOTICE_RESPONSE,
             PARAMETER_STATUS: self.handle_PARAMETER_STATUS,
             READY_FOR_QUERY: self.handle_READY_FOR_QUERY,
             ROW_DESCRIPTION: self.handle_ROW_DESCRIPTION,
@@ -1787,6 +1786,7 @@ class Connection():
     def execute(self, cursor, query, vals):
         
         self.error = None
+        cursor.notices = []
         cursor._row_count = -1
         cursor.ps = {'row_desc': []}
 
@@ -1928,15 +1928,23 @@ class Connection():
             
             if response == NOTICE_RESPONSE:            
                 length = i_unpack(self._read(4))[0]
-                self.notices = str(self._read(length),self._client_encoding)
-                self.log.debug ("Response received from backend:%s", self.notices)                              
+                notice = str(self._read(length),self._client_encoding)
+                if notice.startswith('NOTICE:'):
+                    notice = notice[len('NOTICE:'):]
+                notice = notice.strip().rstrip('\x00')
+                cursor.notices.append(notice)
+                self.log.debug ("Response received from backend:%s", notice)                              
             
             if response == b"I":         
                 length = i_unpack(self._read(4))[0]
-                self.notices = str(self._read(length),self._client_encoding)
-                self.log.debug ("Response received from backend:%s", self.notices)                
+                notice = str(self._read(length),self._client_encoding)
+                if notice.startswith('NOTICE:'):
+                    notice = notice[len('NOTICE:'):]
+                notice = notice.strip().rstrip('\x00')
+                cursor.notices.append(notice)
+                self.log.debug ("Response received from backend:%s", notice)
                 cursor._cached_rows.append([])
-     
+
     def Res_get_dbos_column_descriptions(self, data, tupdesc):
         
         data_idx = 0 
@@ -2463,15 +2471,6 @@ class Connection():
         self._write(SYNC_MSG)
         self._flush()
         self.handle_messages(self._cursor)
-
-    # Byte1('N') - Identifier
-    # Int32 - Message length
-    # Any number of these, followed by a zero byte:
-    #   Byte1 - code identifying the field type (see responseKeys)
-    #   String - field value
-    def handle_NOTICE_RESPONSE(self, data, ps):
-        self.notices.append(
-            dict((s[0:1], s[1:]) for s in data.split(NULL_BYTE)))
 
     def handle_PARAMETER_STATUS(self, data, ps):
         pos = data.find(NULL_BYTE)

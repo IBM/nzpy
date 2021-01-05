@@ -115,14 +115,27 @@ with conn.cursor() as cursor:
 ```
 
 ## Notices
-IBM Netezza notices are stored in a deque called Connection.notices and added using the append() method. Here’s an example:
+IBM Netezza notices are stored in a deque called cursor.notices and added using the append() method. Here’s an example:
 
 ```python
 with conn.cursor() as cursor:
     cursor.execute("call CUSTOMER();")
-    print(conn.notices)
+    print(cursor.notices)
 
-NOTICE: The customer name is alpha
+The customer name is alpha
+
+```
+If backend returns multiple notices:
+
+```python
+with conn.cursor() as cursor:
+    cursor.execute("call CUSTOMER();")
+    for notice in cursor.notices:
+        print(notice)
+
+The customer name is alpha
+The customer location is beta
+
 ```
 
 ## Logging 
