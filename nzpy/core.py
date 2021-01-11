@@ -1857,7 +1857,7 @@ class Connection():
                 length = i_unpack(self._read(4))[0]
                 self.error = str(self._read(length),self._client_encoding)
                 self.log.debug ("Response received from backend:%s", self.error)
-                return False
+                continue
             if response == ROW_DESCRIPTION:
                 length = i_unpack(self._read(4))[0]
                 cursor.ps = {'row_desc': []}
