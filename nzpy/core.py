@@ -26,7 +26,7 @@ import logging.handlers
 from ipaddress import (
     ip_address, IPv4Address, IPv6Address, ip_network, IPv4Network, IPv6Network)
 from datetime import timezone as Timezone
-
+import datetime
 import enum
 
 # Copyright (c) 2007-2009, Mathieu Fenniak
@@ -1760,13 +1760,15 @@ class Connection():
         statement, make_args = convert_paramstyle(nzpy.paramstyle, query)
         args = make_args(vals)
         placeholderCount = query.count('?')
+        if placeholderCount == 0:
+            return query
         if len(args) >= 65536 :
                 self.log.warning("got %d parameters but PostgreSQL only supports 65535 parameters", len(args))
         if len(args) != placeholderCount :
                 self.log.warning("got %d parameters but the statement requires %d", len(args), placeholderCount)
 	
         for arg in args:
-            if isinstance(arg, str):
+            if isinstance(arg, str) or isinstance(arg, datetime.time) or isinstance(arg, datetime.date) or isinstance(arg, datetime.datetime):
                 strfmt = "'{}'"                
                 query = query.replace('?', strfmt.format(arg), 1)
             elif isinstance(arg, bytes):

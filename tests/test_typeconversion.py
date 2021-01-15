@@ -19,14 +19,14 @@ import pdb
 # Type conversion tests
 
 def testTimeRoundtrip(cursor):
-    cursor.execute("SELECT '?' as f1", (Time(4, 5, 6),))
+    cursor.execute("SELECT ? as f1", (Time(4, 5, 6),))
     retval = cursor.fetchall()
     assert retval[0][0] == '04:05:06'
 
 
 def test_date_roundtrip(cursor):
     v = Date(2001, 2, 3)
-    cursor.execute("SELECT '?' as f1", (v,))
+    cursor.execute("SELECT ? as f1", (v,))
     retval = cursor.fetchall()
     assert retval[0][0] == '2001-02-03' 
 
@@ -127,7 +127,7 @@ def test_int_roundtrip(cursor):
 
 def test_timestamp_roundtrip(is_java, cursor):
     v = Datetime(2001, 2, 3, 4, 5, 6, 170000)
-    cursor.execute("SELECT '?' as f1", (v,))
+    cursor.execute("SELECT ? as f1", (v,))
     retval = cursor.fetchall()
     assert retval[0][0] == '2001-02-03 04:05:06.170000' 
 
@@ -138,7 +138,7 @@ def test_timestamp_roundtrip(is_java, cursor):
         os.environ['TZ'] = "America/Edmonton"
         time.tzset()
 
-        cursor.execute("SELECT '?' as f1", (v,))
+        cursor.execute("SELECT ? as f1", (v,))
         retval = cursor.fetchall()
         assert retval[0][0] == '2001-02-03 04:05:06.170000' 
 
