@@ -524,12 +524,17 @@ class Handshake():
             self.log.debug("backend response: %s", response)
             
             if response != core.AUTHENTICATION_REQUEST:
-                _read(8) # do not use just ignore
+                _read(4) # do not use just ignore
+                length = core.i_unpack(_read(4))[0]
             
             if response == core.AUTHENTICATION_REQUEST:
                 areq = core.i_unpack(_read(4))[0]
                 self.log.debug("backend response: %s", areq)
-    
+
+            if response == core.NOTICE_RESPONSE:
+                notices = str(_read(length),'utf8')
+                self.log.debug ("Response received from backend:%s", notices)
+
             if response == core.BACKEND_KEY_DATA:
                 
                 areq = core.i_unpack(_read(4))[0]
@@ -543,7 +548,8 @@ class Handshake():
                 return True
             
             if response == core.ERROR_RESPONSE:
-                self.log.warning("Error occured, server response")
+                error = str(_read(length),'utf8')
+                self.log.warning("Error occured, server response:%s", error)
                 return False
    
     
