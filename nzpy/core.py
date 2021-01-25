@@ -2137,7 +2137,7 @@ class Connection():
 					#abstime2struct(workspace, &timestamp_value)
                     pass
                 
-                time_format = "{0:02d}-{1:02d}-{2:02d} {3:02d}:{4:02d}:{5:02d}.{6:02d}"
+                time_format = "{0:02d}-{1:02d}-{2:02d} {3:02d}:{4:02d}:{5:02d}.{6:06d}"
                 value = time_format.format(timestamp_value[0],timestamp_value[1],timestamp_value[2],timestamp_value[3],timestamp_value[4],timestamp_value[5],timestamp_value[6])
                 row.append(value)
                 self.log.debug("field=%d, datatype=TIMESTAMP, value=%s", cur_field+1, value)            
@@ -3059,7 +3059,7 @@ def EncodeTimeOnly(tm, fusec, timetz_zone) :
 def timestamp2struct(dt):
 
     ts = []
-    date = int(dt / 86400000000)
+    date = int(dt // 86400000000)
     date0 = date2j(2000, 1, 1)
     
     time = dt % 86400000000
@@ -3082,8 +3082,6 @@ def timestamp2struct(dt):
 	#Netezza stores the fraction field of TIMESTAMP_STRUCT to
 	#microsecond precision. The fraction field of a must be in
 	#billionths, per ODBC spec. Therefore, multiply by 1000.
-    
-    fraction *= 1000
     
     time = int(time/1000000) # NZ microsecs
     
