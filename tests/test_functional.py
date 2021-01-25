@@ -448,7 +448,7 @@ class testnzpy(unittest.TestCase):
         results = self.cursor.fetchall()
         for c1, c2, c3, c4 in results:
             self.assertEqual(58, c1, "ERROR: Data Difference")
-            self.assertEqual('1982-04-22 00:00:00.00', c2, "ERROR: Data Difference")
+            self.assertEqual('1982-04-22 00:00:00.000000', c2, "ERROR: Data Difference")
             self.assertEqual('1982-04-22', c3, "ERROR: Data Difference")
             self.assertEqual('1982-04-22', c4, "ERROR: Data Difference")
 
@@ -626,7 +626,7 @@ class testnzpy(unittest.TestCase):
         self.cursor.execute("SELECT  (dateCol + INTERVAL '@ 1DAY') AS next_date FROM test1")
         results = self.cursor.fetchall()
         for c1 in results:
-            self.assertEqual(['9999-12-31 00:00:00.00'], c1, "ERROR: Data Difference")
+            self.assertEqual(['9999-12-31 00:00:00.000000'], c1, "ERROR: Data Difference")
         self.cursor.execute("DELETE FROM test1")
         self.cursor.execute("INSERT INTO test1 VALUES ('48010301 BC')")
         self.cursor.execute("SELECT * FROM test1")
