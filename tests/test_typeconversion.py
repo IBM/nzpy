@@ -309,6 +309,43 @@ def test_array_inspect(con):
     con.array_inspect([[1], [2], [3]])
     con.array_inspect([[[1]], [[2]], [[3]]])
 
+def test_json_roundtrip(cursor):
+    val = {'name': 'Apollo 11 Cave', 'zebra': True, 'age': 26.003}
+    retval = tuple(cursor.execute("SELECT ?", (json.dumps(val),)))
+    assert retval[0][0] == '{"name": "Apollo 11 Cave", "zebra": true, "age": 26.003}'
+
+
+def test_jsonb_roundtrip(cursor):
+    val = {'name': 'Apollo 11 Cave', 'zebra': True, 'age': 26.003}
+    cursor.execute("SELECT cast(? as jsonb)", (json.dumps(val),))
+    retval = cursor.fetchall()
+    assert retval[0][0] == '{"age": 26.003, "name": "Apollo 11 Cave", "zebra": true}'
+
+
+def test_json_access_object(cursor):
+    val = {'name': 'Apollo 11 Cave', 'zebra': True, 'age': 26.003}
+    cursor.execute("SELECT cast(? as json) -> ?", (json.dumps(val), 'name'))
+    retval = cursor.fetchall()
+    assert retval[0][0] == '"Apollo 11 Cave"'
+
+def test_jsonb_access_object(cursor):
+    val = {'name': 'Apollo 11 Cave', 'zebra': True, 'age': 26.003}
+    cursor.execute("SELECT cast(? as jsonb) -> ?", (json.dumps(val), 'name'))
+    retval = cursor.fetchall()
+    assert retval[0][0] == '"Apollo 11 Cave"'
+
+def test_json_access_array(cursor):
+    val = [-1, -2, -3, -4, -5]
+    cursor.execute("SELECT cast(? as json) -> ?", (json.dumps(val), 2))
+    retval = cursor.fetchall()
+    assert retval[0][0] == '-3'
+
+
+def test_jsonb_access_array(cursor):
+    val = [-1, -2, -3, -4, -5]
+    cursor.execute("SELECT cast(? as jsonb) -> ?", (json.dumps(val), 2))
+    retval = cursor.fetchall()
+    assert retval[0][0] == '-3'
 
 '''
 def test_float_plus_infinity_roundtrip(cursor):
@@ -709,48 +746,6 @@ def test_hstore_roundtrip(cursor):
     val = '"a"=>"1"'
     retval = tuple(cursor.execute("SELECT cast(? as hstore)", (val,)))
     assert retval[0][0] == val
-
-
-def test_json_roundtrip(cursor):
-    val = {'name': 'Apollo 11 Cave', 'zebra': True, 'age': 26.003}
-    retval = tuple(cursor.execute("SELECT ?", (nzpy.PGJson(val),)))
-    assert retval[0][0] == val
-
-
-def test_jsonb_roundtrip(cursor):
-    val = {'name': 'Apollo 11 Cave', 'zebra': True, 'age': 26.003}
-    cursor.execute("SELECT cast(? as jsonb)", (json.dumps(val),))
-    retval = cursor.fetchall()
-    assert retval[0][0] == val
-
-
-def test_json_access_object(cursor):
-    val = {'name': 'Apollo 11 Cave', 'zebra': True, 'age': 26.003}
-    cursor.execute("SELECT cast(? as json) -> ?", (json.dumps(val), 'name'))
-    retval = cursor.fetchall()
-    assert retval[0][0] == 'Apollo 11 Cave'
-
-
-def test_jsonb_access_object(cursor):
-    val = {'name': 'Apollo 11 Cave', 'zebra': True, 'age': 26.003}
-    cursor.execute("SELECT cast(? as jsonb) -> ?", (json.dumps(val), 'name'))
-    retval = cursor.fetchall()
-    assert retval[0][0] == 'Apollo 11 Cave'
-
-
-def test_json_access_array(cursor):
-    val = [-1, -2, -3, -4, -5]
-    cursor.execute("SELECT cast(? as json) -> ?", (json.dumps(val), 2))
-    retval = cursor.fetchall()
-    assert retval[0][0] == -3
-
-
-def test_jsonb_access_array(cursor):
-    val = [-1, -2, -3, -4, -5]
-    cursor.execute("SELECT cast(? as jsonb) -> ?", (json.dumps(val), 2))
-    retval = cursor.fetchall()
-    assert retval[0][0] == -3
-
 
 def test_jsonb_access_path(cursor):
     j = {
