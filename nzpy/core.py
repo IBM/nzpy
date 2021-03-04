@@ -1113,12 +1113,29 @@ NzDEPR_Blob = 24            # OBSOLETE 3.0: BLAST Era Large 'binary' Object
 NzTypeNChar = 25
 NzTypeNVarChar = 26
 NzDEPR_NText = 27           # OBSOLETE 3.0: BLAST Era Large 'nchar text' Object
-NzTypeLastEntry = 28        # KEEP THIS ENTRY LAST - used internally to size an array
+#skip 28
+#skip 29
+NzTypeJson = 30
+NzTypeJsonb = 31
+NzTypeJsonpath = 32
+NzTypeLastEntry = 33        # KEEP THIS ENTRY LAST - used internally to size an array
 
 # this is version of nzpy driver
-nzpy_client_version = "11.0.0.0"
+nzpy_client_version = "Release 11.1.0.0"
 
-dataType = {NzTypeChar: "NzTypeChar", NzTypeVarChar: "NzTypeVarChar", NzTypeVarFixedChar: "NzTypeVarFixedChar", NzTypeGeometry: "NzTypeGeometry", NzTypeVarBinary: "NzTypeVarBinary", NzTypeNChar: "NzTypeNChar", NzTypeNVarChar: "NzTypeNVarChar"}
+dataType = {
+            NzTypeChar:         "NzTypeChar",
+            NzTypeVarChar:      "NzTypeVarChar",
+            NzTypeVarFixedChar: "NzTypeVarFixedChar",
+            NzTypeGeometry:     "NzTypeGeometry",
+            NzTypeVarBinary:    "NzTypeVarBinary",
+            NzTypeNChar:        "NzTypeNChar",
+            NzTypeNVarChar:     "NzTypeNVarChar",
+            NzTypeJson:         "NzTypeJson",
+            NzTypeJsonb:        "NzTypeJsonb",
+            NzTypeJsonpath:     "NzTypeJsonpath"
+                
+           }
 
 arr_trans = dict(zip(map(ord, "[] 'u"), list('{}') + [None] * 3))
 
@@ -1768,7 +1785,7 @@ class Connection():
                 self.log.warning("got %d parameters but the statement requires %d", len(args), placeholderCount)
 	
         for arg in args:
-            if isinstance(arg, str) or isinstance(arg, datetime.time) or isinstance(arg, datetime.date) or isinstance(arg, datetime.datetime):
+            if isinstance(arg, str) or isinstance(arg, datetime.time) or isinstance(arg, datetime.date) or isinstance(arg, datetime.datetime) or isinstance(arg, dict):
                 strfmt = "'{}'"                
                 query = query.replace('?', strfmt.format(arg), 1)
             elif isinstance(arg, bytes):
@@ -2033,7 +2050,7 @@ class Connection():
                 memsize = memsize + 1
             if fldtype == NzTypeChar or fldtype == NzTypeVarChar or fldtype == NzTypeVarFixedChar or fldtype == NzTypeGeometry or fldtype == NzTypeVarBinary:
                 memsize = memsize + 1
-            if fldtype == NzTypeNChar or fldtype == NzTypeNVarChar: 
+            if fldtype == NzTypeNChar or fldtype == NzTypeNVarChar or fldtype == NzTypeJson or fldtype == NzTypeJsonb or fldtype == NzTypeJsonpath: 
                 memsize *= 4
                 memsize = memsize + 1 
             if fldtype == NzTypeDate:
@@ -2060,7 +2077,7 @@ class Connection():
                 row.append(value)
                 self.log.debug("field=%d, datatype=%s, value=%s", cur_field+1,dataType[fldtype], value)                
                 
-            if fldtype == NzTypeVarChar or fldtype == NzTypeVarFixedChar or fldtype == NzTypeGeometry or fldtype == NzTypeVarBinary:
+            if fldtype == NzTypeVarChar or fldtype == NzTypeVarFixedChar or fldtype == NzTypeGeometry or fldtype == NzTypeVarBinary or fldtype == NzTypeJson or fldtype == NzTypeJsonb or fldtype == NzTypeJsonpath:
                 cursize  = int.from_bytes(fieldDataP[0:2], 'little') - 2
                 value = str(fieldDataP[2:cursize+2], self._char_varchar_encoding)
                 row.append(value)

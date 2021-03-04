@@ -2,7 +2,7 @@
 
 ## Scope
 
-nzpy is a pure-Python IBM Netezza driver that complies with DB-API 2.0. It is tested on Python versions 3.5+. 
+nzpy is a pure-Python IBM Netezza driver that complies with DB-API 2.0. It is tested on Python versions 3.5+. It is supported with NPS 11.1.2.x and later. Although nzpy works with older NPS versions but it do not support few features such as external table, parameter style query etc.
 
 ## Installation
 To install nzpy using pip type:
@@ -267,7 +267,7 @@ This package returns the following types for values from the IBM Netezza backend
   returned as string
 - numeric and geometry are returned as string
 - the boolean type is returned as bool
-
+- JSON, JSONB and JSONPATH datatypes is returned as string
 
 ## Parameter Style
 nzpy do not support all the DB-API parameter styles. It only supports qmark style. Here’s an example of using the 'qmark' parameter style:
@@ -290,6 +290,7 @@ cursor.execute("create external table et1 'C:\\et1.txt' using ( remotesource 'py
 - SSL/TLSv1.2 crypto support
 - Transaction support: begin, rollback, commit
 - Full support for all IBM Netezza data types
+- Support JSON, JSONB and JSONPATH datatypes
 - Full DDL, DML query syntax support for IBM Netezza
 - Full external table support (load and unload)
 - Configurable logging feature
