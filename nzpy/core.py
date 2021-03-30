@@ -1168,7 +1168,7 @@ class Connection():
 
     def __init__(
             self, user, host, unix_sock, port, database, password, ssl,
-            securityLevel, timeout, application_name, max_prepared_statements, datestyle, logLevel, tcp_keepalive, char_varchar_encoding, logOptions=LogOptions.Inherit):
+            securityLevel, timeout, application_name, max_prepared_statements, datestyle, logLevel, tcp_keepalive, char_varchar_encoding, logOptions=LogOptions.Inherit, pgOptions=None):
         self._char_varchar_encoding = char_varchar_encoding
         self._client_encoding = "utf8"
         self._commands_with_count = (
@@ -1528,7 +1528,7 @@ class Connection():
             COPY_OUT_RESPONSE: self.handle_COPY_OUT_RESPONSE}
         
         hs = handshake.Handshake(self._usock, self._sock, ssl, self.log)
-        response = hs.startup(database, securityLevel, user, password)
+        response = hs.startup(database, securityLevel, user, password, pgOptions)
         
         if response is not False: 
             self._flush = response.flush
