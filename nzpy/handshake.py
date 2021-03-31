@@ -77,7 +77,7 @@ class Handshake():
         self.guardium_clientHostName = gethostname()
         self.guardium_applName = path.basename(argv[0])
 
-    def startup(self, database, securityLevel, user, password):
+    def startup(self, database, securityLevel, user, password, pgOptions):
    
         #Negotiate the handshake version (connection protocol)
         if not self.conn_handshake_negotiate(self._sock.write, self._sock.read, self._sock.flush, self._hsVersion, self._protocol2):
@@ -85,7 +85,7 @@ class Handshake():
             return False
             
         self.log.info("Sending handshake information to server")
-        if not self.conn_send_handshake_info(self._sock.write, self._sock.read, self._sock.flush, database, securityLevel, self._hsVersion, self._protocol1, self._protocol2, user):  
+        if not self.conn_send_handshake_info(self._sock.write, self._sock.read, self._sock.flush, database, securityLevel, self._hsVersion, self._protocol1, self._protocol2, user, pgOptions):  
             self.log.warning("Error in conn_send_handshake_info")
             return False
             
@@ -154,7 +154,7 @@ class Handshake():
                 self.log.warning("Bad protocol error")
                 return False
     
-    def conn_send_handshake_info(self, _write, _read, _flush, _database, securityLevel, _hsVersion, _protocol1, _protocol2, user):
+    def conn_send_handshake_info(self, _write, _read, _flush, _database, securityLevel, _hsVersion, _protocol1, _protocol2, user, pgOptions):
         
         #We need database information at the backend in order to
         #select security restrictions. So always send the database first
@@ -170,9 +170,9 @@ class Handshake():
             return False
             
         if self._hsVersion == CP_VERSION_6 or self._hsVersion == CP_VERSION_4:
-            return self.conn_send_handshake_version4(self._sock.write, self._sock.read, self._sock.flush, self._protocol1, self._protocol2, self._hsVersion, user)
+            return self.conn_send_handshake_version4(self._sock.write, self._sock.read, self._sock.flush, self._protocol1, self._protocol2, self._hsVersion, user, pgOptions)
         elif self._hsVersion == CP_VERSION_5 or self._hsVersion == CP_VERSION_3 or self._hsVersion == CP_VERSION_2:
-            return self.conn_send_handshake_version2(self._sock.write, self._sock.read, self._sock.flush, self._protocol1, self._protocol2, self._hsVersion, user)
+            return self.conn_send_handshake_version2(self._sock.write, self._sock.read, self._sock.flush, self._protocol1, self._protocol2, self._hsVersion, user, pgOptions)
             
         return True
     
@@ -309,7 +309,7 @@ class Handshake():
                     self.log.warning("Error: connection failed")
                     return False         
     
-    def conn_send_handshake_version2(self, _write, _read, _flush, _protocol1, _protocol2, _hsVersion, user):
+    def conn_send_handshake_version2(self, _write, _read, _flush, _protocol1, _protocol2, _hsVersion, user, pgOptions):
         
         if isinstance(user, str):
             user = user.encode('utf8')
@@ -336,6 +336,13 @@ class Handshake():
         
                 if information == HSV2_REMOTE_PID:
                     val = bytearray( core.h_pack(information) + core.i_pack(getpid()))
+                    information = HSV2_OPTIONS
+                    continue
+
+                if information == HSV2_OPTIONS:
+                    if pgOptions is not None:
+                        val = bytearray( core.h_pack(information))
+                        val.extend( pgOptions.encode('utf8') + core.NULL_BYTE)
                     information = HSV2_CLIENT_TYPE
                     continue
                     
@@ -364,7 +371,7 @@ class Handshake():
                 self.log.warning("ERROR_CONN_FAIL")
                 return False                
     
-    def conn_send_handshake_version4(self, _write, _read, _flush, _protocol1, _protocol2, _hsVersion, user):
+    def conn_send_handshake_version4(self, _write, _read, _flush, _protocol1, _protocol2, _hsVersion, user, pgOptions):
         
         if isinstance(user, str):
             user = user.encode('utf8')
@@ -419,6 +426,13 @@ class Handshake():
                     
                 if information == HSV2_REMOTE_PID:
                     val = bytearray( core.h_pack(information) + core.i_pack(getpid()))
+                    information = HSV2_OPTIONS
+                    continue
+
+                if information == HSV2_OPTIONS:
+                    if pgOptions is not None:
+                        val = bytearray( core.h_pack(information))
+                        val.extend( pgOptions.encode('utf8') + core.NULL_BYTE)
                     information = HSV2_CLIENT_TYPE
                     continue
                     
