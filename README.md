@@ -279,6 +279,14 @@ with conn.cursor() as cursor:
         print("c1 = %s, c2 = %s, c3 = %s" % (c1, c2, c3))
 ```
 
+## Encoding
+User can provide encoding for char/varchar datatype from application. Default value is 'latin'.
+For example, user can set nzpy to support 'UTF8' encoding for char and varchar by passing char_varchar_encoding='utf8' in connection parameter like below:
+
+```
+conn = nzpy.connect(user="admin", password="password",host='localhost', port=5480, database="db1", securityLevel=1,logLevel=0, char_varchar_encoding='utf8')
+```
+
 ## External table 
 You can unload data from an IBM Netezza database table on a Netezza host system to a remote client. This unload does not remove rows from the database but instead stores the unloaded data in a flat file (external table) that is suitable for loading back into a Netezza database. 
 Below query would create a file 'et1.txt' on remote system from Netezza table t1 with data delimeted by '|'. 
