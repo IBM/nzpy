@@ -805,8 +805,8 @@ class Cursor():
         columns = []
         for col in row_desc:
             columns.append(
-                (col["name"], col["type_oid"], None, None, None, None, None))
-        return columns
+                (col["name"].decode(), col["type_oid"]))
+        return tuple(columns)
 
     ##
     # Executes a database operation.  Parameters may be provided as a sequence
