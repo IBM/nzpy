@@ -842,6 +842,7 @@ class Cursor():
         """
         try:
             self.stream = stream
+            self.clear()
 
             if not self._c.in_transaction and not self._c.autocommit:
                self._c.execute(self, "begin", None)
@@ -870,6 +871,7 @@ class Cursor():
             in the sequence should be sequences or mappings of parameters, the
             same as the args argument of the :meth:`execute` method.
         """
+        self.clear()
         rowcounts = []
         for parameters in param_sets:
             self.execute(operation, parameters)
@@ -976,6 +978,12 @@ class Cursor():
             else:
                 raise StopIteration()
 
+    def clear(self):
+        self.arraysize = 1
+        self.ps = None
+        self._row_count = -1
+        self._cached_rows.clear()
+        self.notices.clear()
 
 # Message codes
 NOTICE_RESPONSE = b"N"
