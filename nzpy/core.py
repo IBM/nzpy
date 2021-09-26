@@ -247,6 +247,12 @@ class InterfaceError(Error):
     """
     pass
 
+class ConnectionClosedError(InterfaceError):
+    """An interface error, which identifies error occurring due tothe underlying
+    connection being already closed"""
+    def __init__(self, msg=None):
+        super().__init__(msg if msg is not None else "connection is closed")
+
 
 class DatabaseError(Error):
     """Generic exception raised for errors that are related to the database.
@@ -783,7 +789,10 @@ class Cursor():
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
+        try:
+            self.close()
+        except:
+
 
     @property
     def connection(self):
@@ -852,7 +861,7 @@ class Cursor():
             if self._c is None:
                 raise InterfaceError("Cursor closed")
             elif self._c._sock is None:
-                raise InterfaceError("connection is closed")
+                raise ConnectionClosedError()
             else:
                 raise e
         return self
@@ -1154,6 +1163,7 @@ class Connection():
     Warning = property(lambda self: self._getError(Warning))
     Error = property(lambda self: self._getError(Error))
     InterfaceError = property(lambda self: self._getError(InterfaceError))
+    ConnectionClosedError = property(lambda self: self._getError(ConnectionClosedError))
     DatabaseError = property(lambda self: self._getError(DatabaseError))
     OperationalError = property(lambda self: self._getError(OperationalError))
     IntegrityError = property(lambda self: self._getError(IntegrityError))
@@ -1166,7 +1176,16 @@ class Connection():
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
+        try:
+            self.close()
+        except ConnectionClosedError as e:
+            pass
+
+    def __del__(self):
+        try:
+            self.close()
+        except ConnectionClosedError as e:
+            pass
 
     def _getError(self, error):
         warn(
@@ -1690,6 +1709,8 @@ class Connection():
     def close(self):
         """Closes the database connection.
 
+        If the connection is already closed, this raises ConnectionClosedError()
+
         This function is part of the `DBAPI 2.0 specification
         <http://www.python.org/dev/peps/pep-0249/>`_.
         """
@@ -1700,9 +1721,9 @@ class Connection():
             self._flush()
             self._sock.close()
         except AttributeError:
-            raise InterfaceError("connection is closed")
+            raise ConnectionClosedError()
         except ValueError:
-            raise InterfaceError("connection is closed")
+            raise ConnectionClosedError()
         except socket.error:
             pass
         finally:
@@ -2413,11 +2434,11 @@ class Connection():
             self._write(FLUSH_MSG)
         except ValueError as e:
             if str(e) == "write to closed file":
-                raise InterfaceError("connection is closed")
+                raise ConnectionClosedError()
             else:
                 raise e
         except AttributeError:
-            raise InterfaceError("connection is closed")
+            raise ConnectionClosedError()
 
     def send_EXECUTE(self, cursor):
         # Byte1('E') - Identifies the message as an execute message.
