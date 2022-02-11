@@ -81,7 +81,7 @@ class Handshake():
             self.log.info("Handshake negotiation unsuccessful")
             return False
 
-        self.log.info("Sending handshake information to server")
+        self.log.debug("Sending handshake information to server")
         if not self.conn_send_handshake_info(self._sock.write, self._sock.read, self._sock.flush, database, securityLevel, self._hsVersion, self._protocol1, self._protocol2, user, pgOptions):
             self.log.warning("Error in conn_send_handshake_info")
             return False
@@ -171,10 +171,11 @@ class Handshake():
         return True
 
     def conn_send_database(self, _write,_read, _flush,_database):
+        db = None
         if _database is not None:
             if isinstance(_database, str):
                 db = _database.encode('utf8')
-            self.log.info("Database name: %s", db)
+            self.log.info("Database name: %s", str(db,'utf8'))
 
             val = bytearray( core.h_pack(HSV2_DB))
             val.extend(db + core.NULL_BYTE)
@@ -183,7 +184,7 @@ class Handshake():
             _flush()
 
         beresp = _read(1)
-        self.log.debug("Backend response: %s", beresp)
+        self.log.info("Backend response: %s", str(beresp,'utf8'))
         if beresp == b'N':
             return True
         elif beresp == core.ERROR_RESPONSE:
@@ -281,7 +282,7 @@ class Handshake():
 
                 if beresp == b'N':
                     if information == HSV2_SSL_NEGOTIATE:
-                        self.log.info("Attempting unsecured session")
+                        self.log.debug("Attempting unsecured session")
                     information = 0
                     return True
 
@@ -308,7 +309,7 @@ class Handshake():
             _write(val)
             _flush()
             beresp = _read(1)
-            self.log.debug("Backend response: %s",beresp)
+            self.log.info("Backend response: %s", str(beresp, 'utf8'))
             if beresp == b'N':
                 if information == HSV2_PROTOCOL:
                     val = bytearray( core.h_pack(information) + core.h_pack(_protocol1) + core.h_pack(_protocol2))
@@ -366,7 +367,7 @@ class Handshake():
             _write(val)
             _flush()
             beresp = _read(1)
-            self.log.debug("Backend response: %s",beresp)
+            self.log.info("Backend response: %s", str(beresp,'utf8'))
             if beresp == b'N':
                 if information == HSV2_APPNAME: # App name
                     val = bytearray( core.h_pack(information))
@@ -509,7 +510,7 @@ class Handshake():
     def conn_connection_complete(self, _read):
         while (1):
             response = _read(1)
-            self.log.debug("backend response: %s", response)
+            self.log.info("backend response: %s", str(response,'utf8'))
 
             if response != core.AUTHENTICATION_REQUEST:
                 _read(4) # do not use just ignore
@@ -517,7 +518,7 @@ class Handshake():
 
             if response == core.AUTHENTICATION_REQUEST:
                 areq = core.i_unpack(_read(4))[0]
-                self.log.debug("backend response: %s", areq)
+                self.log.info("backend response: %s", areq)
 
             if response == core.NOTICE_RESPONSE:
                 notices = str(_read(length),'utf8')
