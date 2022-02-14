@@ -4,7 +4,6 @@ from warnings import warn
 import socket
 import platform
 import getpass
-from struct import pack
 from decimal import Decimal
 from collections import deque, defaultdict
 from itertools import count, islice
@@ -18,13 +17,10 @@ from time import localtime
 import nzpy
 from . import handshake, numeric
 from json import loads, dumps
-from os import getpid, path
-from scramp import ScramClient
-import enum
-import logging 
+from os import path
+import logging
 import logging.handlers 
-from ipaddress import (
-    ip_address, IPv4Address, IPv6Address, ip_network, IPv4Network, IPv6Network)
+from ipaddress import (ip_address, IPv4Address, IPv6Address, ip_network, IPv4Network, IPv6Network)
 from datetime import timezone as Timezone
 import datetime
 import enum
@@ -68,36 +64,21 @@ class LogOptions(enum.IntFlag):
     Inherit = enum.auto()  # inherit the logging settings from the caller
     Logfile = enum.auto()  # add 
 
+
 class Interval():
-    """An Interval represents a measurement of time.  In PostgreSQL, an
-    interval is defined in the measure of months, days, and microseconds; as
-    such, the nzpy interval type represents the same information.
-
-    Note that values of the :attr:`microseconds`, :attr:`days` and
-    :attr:`months` properties are independently measured and cannot be
-    converted to each other.  A month may be 28, 29, 30, or 31 days, and a day
-    may occasionally be lengthened slightly by a leap second.
-
+    """An Interval represents a measurement of time.  In PostgreSQL, an interval is defined in the measure of months, days, and microseconds; as such, the nzpy interval type represents the same information. Note that values of the :attr:`microseconds`, :attr:`days` and :attr:`months` properties are independently measured and cannot be converted to each other.  A month may be 28, 29, 30, or 31 days, and a day may occasionally be lengthened slightly by a leap second.
     .. attribute:: microseconds
-
         Measure of microseconds in the interval.
-
         The microseconds value is constrained to fit into a signed 64-bit
         integer.  Any attempt to set a value too large or too small will result
         in an OverflowError being raised.
-
     .. attribute:: days
-
         Measure of days in the interval.
-
         The days value is constrained to fit into a signed 32-bit integer.
         Any attempt to set a value too large or too small will result in an
         OverflowError being raised.
-
     .. attribute:: months
-
         Measure of months in the interval.
-
         The months value is constrained to fit into a signed 32-bit integer.
         Any attempt to set a value too large or too small will result in an
         OverflowError being raised.
@@ -219,7 +200,6 @@ min_int8, max_int8 = -2 ** 63, 2 ** 63
 class Warning(Exception):
     """Generic exception raised for important database warnings like data
     truncations.  This exception is not currently used by nzpy.
-
     This exception is part of the `DBAPI 2.0 specification
     <http://www.python.org/dev/peps/pep-0249/>`_.
     """
@@ -229,7 +209,6 @@ class Warning(Exception):
 class Error(Exception):
     """Generic exception that is the base exception of all other error
     exceptions.
-
     This exception is part of the `DBAPI 2.0 specification
     <http://www.python.org/dev/peps/pep-0249/>`_.
     """
@@ -241,7 +220,6 @@ class InterfaceError(Error):
     interface rather than the database itself.  For example, if the interface
     attempts to use an SSL connection but the server refuses, an InterfaceError
     will be raised.
-
     This exception is part of the `DBAPI 2.0 specification
     <http://www.python.org/dev/peps/pep-0249/>`_.
     """
@@ -257,7 +235,6 @@ class ConnectionClosedError(InterfaceError):
 class DatabaseError(Error):
     """Generic exception raised for errors that are related to the database.
     This exception is currently never raised by nzpy.
-
     This exception is part of the `DBAPI 2.0 specification
     <http://www.python.org/dev/peps/pep-0249/>`_.
     """
@@ -267,7 +244,6 @@ class DatabaseError(Error):
 class DataError(DatabaseError):
     """Generic exception raised for errors that are due to problems with the
     processed data.  This exception is not currently raised by nzpy.
-
     This exception is part of the `DBAPI 2.0 specification
     <http://www.python.org/dev/peps/pep-0249/>`_.
     """
@@ -279,7 +255,6 @@ class OperationalError(DatabaseError):
     Generic exception raised for errors that are related to the database's
     operation and not necessarily under the control of the programmer. This
     exception is currently never raised by nzpy.
-
     This exception is part of the `DBAPI 2.0 specification
     <http://www.python.org/dev/peps/pep-0249/>`_.
     """
@@ -290,7 +265,6 @@ class IntegrityError(DatabaseError):
     """
     Generic exception raised when the relational integrity of the database is
     affected.  This exception is not currently raised by nzpy.
-
     This exception is part of the `DBAPI 2.0 specification
     <http://www.python.org/dev/peps/pep-0249/>`_.
     """
@@ -301,7 +275,6 @@ class InternalError(DatabaseError):
     """Generic exception raised when the database encounters an internal error.
     This is currently only raised when unexpected state occurs in the nzpy
     interface itself, and is typically the result of a interface bug.
-
     This exception is part of the `DBAPI 2.0 specification
     <http://www.python.org/dev/peps/pep-0249/>`_.
     """
@@ -312,7 +285,6 @@ class ProgrammingError(DatabaseError):
     """Generic exception raised for programming errors.  For example, this
     exception is raised if more parameter fields are in a query string than
     there are available parameters.
-
     This exception is part of the `DBAPI 2.0 specification
     <http://www.python.org/dev/peps/pep-0249/>`_.
     """
@@ -322,7 +294,6 @@ class ProgrammingError(DatabaseError):
 class NotSupportedError(DatabaseError):
     """Generic exception raised in case a method or database API was used which
     is not supported by the database.
-
     This exception is part of the `DBAPI 2.0 specification
     <http://www.python.org/dev/peps/pep-0249/>`_.
     """
@@ -355,10 +326,8 @@ class ArrayDimensionsNotConsistentError(ProgrammingError):
 
 def Date(year, month, day):
     """Constuct an object holding a date value.
-
     This function is part of the `DBAPI 2.0 specification
     <http://www.python.org/dev/peps/pep-0249/>`_.
-
     :rtype: :class:`datetime.date`
     """
     return date(year, month, day)
@@ -366,10 +335,8 @@ def Date(year, month, day):
 
 def Time(hour, minute, second):
     """Construct an object holding a time value.
-
     This function is part of the `DBAPI 2.0 specification
     <http://www.python.org/dev/peps/pep-0249/>`_.
-
     :rtype: :class:`datetime.time`
     """
     return time(hour, minute, second)
@@ -377,10 +344,8 @@ def Time(hour, minute, second):
 
 def Timestamp(year, month, day, hour, minute, second):
     """Construct an object holding a timestamp value.
-
     This function is part of the `DBAPI 2.0 specification
     <http://www.python.org/dev/peps/pep-0249/>`_.
-
     :rtype: :class:`datetime.datetime`
     """
     return Datetime(year, month, day, hour, minute, second)
@@ -389,10 +354,8 @@ def Timestamp(year, month, day, hour, minute, second):
 def DateFromTicks(ticks):
     """Construct an object holding a date value from the given ticks value
     (number of seconds since the epoch).
-
     This function is part of the `DBAPI 2.0 specification
     <http://www.python.org/dev/peps/pep-0249/>`_.
-
     :rtype: :class:`datetime.date`
     """
     return Date(*localtime(ticks)[:3])
@@ -401,10 +364,8 @@ def DateFromTicks(ticks):
 def TimeFromTicks(ticks):
     """Construct an objet holding a time value from the given ticks value
     (number of seconds since the epoch).
-
     This function is part of the `DBAPI 2.0 specification
     <http://www.python.org/dev/peps/pep-0249/>`_.
-
     :rtype: :class:`datetime.time`
     """
     return Time(*localtime(ticks)[3:6])
@@ -413,10 +374,8 @@ def TimeFromTicks(ticks):
 def TimestampFromTicks(ticks):
     """Construct an object holding a timestamp value from the given ticks value
     (number of seconds since the epoch).
-
     This function is part of the `DBAPI 2.0 specification
     <http://www.python.org/dev/peps/pep-0249/>`_.
-
     :rtype: :class:`datetime.datetime`
     """
     return Timestamp(*localtime(ticks)[:6])
@@ -424,10 +383,8 @@ def TimestampFromTicks(ticks):
 
 def Binary(value):
     """Construct an object holding binary data.
-
     This function is part of the `DBAPI 2.0 specification
     <http://www.python.org/dev/peps/pep-0249/>`_.
-
     """
     return value
 
@@ -727,31 +684,22 @@ def int_in(data, offset, length):
 class Cursor():
     """A cursor object is returned by the :meth:`~Connection.cursor` method of
     a connection. It has the following attributes and methods:
-
     .. attribute:: arraysize
-
         This read/write attribute specifies the number of rows to fetch at a
         time with :meth:`fetchmany`.  It defaults to 1.
-
     .. attribute:: connection
-
         This read-only attribute contains a reference to the connection object
         (an instance of :class:`Connection`) on which the cursor was
         created.
-
         This attribute is part of a DBAPI 2.0 extension.  Accessing this
         attribute will generate the following warning: ``DB-API extension
         cursor.connection used``.
-
     .. attribute:: rowcount
-
         This read-only attribute contains the number of rows that the last
         ``execute()`` or ``executemany()`` method produced (for query
         statements like ``SELECT``) or affected (for modification statements
         like ``UPDATE``).
-
         The value is -1 if:
-
         - No ``execute()`` or ``executemany()`` method has been performed yet
           on the cursor.
         - There was no rowcount associated with the last ``execute()``.
@@ -761,18 +709,14 @@ class Cursor():
           version 9.
         - Using a ``COPY`` query statement on PostgreSQL server version 8.1 or
           older.
-
         This attribute is part of the `DBAPI 2.0 specification
         <http://www.python.org/dev/peps/pep-0249/>`_.
-
     .. attribute:: description
-
         This read-only attribute is a sequence of 7-item sequences.  Each value
         contains information describing one result column.  The 7 items
         returned for each column are (name, type_code, display_size,
         internal_size, precision, scale, null_ok).  Only the first two values
         are provided by the current implementation.
-
         This attribute is part of the `DBAPI 2.0 specification
         <http://www.python.org/dev/peps/pep-0249/>`_.
     """
@@ -824,13 +768,10 @@ class Cursor():
         """Executes a database operation.  Parameters may be provided as a
         sequence, or as a mapping, depending upon the value of
         :data:`nzpy.paramstyle`.
-
         This method is part of the `DBAPI 2.0 specification
         <http://www.python.org/dev/peps/pep-0249/>`_.
-
         :param operation:
             The SQL statement to execute.
-
         :param args:
             If :data:`paramstyle` is ``qmark``, ``numeric``, or ``format``,
             this argument should be an array of parameters to bind into the
@@ -838,13 +779,11 @@ class Cursor():
             be a dict mapping of parameters.  If the :data:`paramstyle` is
             ``pyformat``, the argument value may be either an array or a
             mapping.
-
         :param stream: This is a nzpy extension for use with the PostgreSQL
             `COPY
             <http://www.postgresql.org/docs/current/static/sql-copy.html>`_
             command. For a COPY FROM the parameter must be a readable file-like
             object, and for COPY TO it must be writable.
-
             .. versionadded:: 1.9.11
         """
         try:
@@ -867,10 +806,8 @@ class Cursor():
     def executemany(self, operation, param_sets):
         """Prepare a database operation, and then execute it against all
         parameter sequences or mappings provided.
-
         This method is part of the `DBAPI 2.0 specification
         <http://www.python.org/dev/peps/pep-0249/>`_.
-
         :param operation:
             The SQL statement to execute
         :param parameter_sets:
@@ -889,10 +826,8 @@ class Cursor():
 
     def fetchone(self):
         """Fetch the next row of a query result set.
-
         This method is part of the `DBAPI 2.0 specification
         <http://www.python.org/dev/peps/pep-0249/>`_.
-
         :returns:
             A row as a sequence of field values, or ``None`` if no more rows
             are available.
@@ -908,17 +843,12 @@ class Cursor():
 
     def fetchmany(self, num=None):
         """Fetches the next set of rows of a query result.
-
         This method is part of the `DBAPI 2.0 specification
         <http://www.python.org/dev/peps/pep-0249/>`_.
-
         :param size:
-
             The number of rows to fetch when called.  If not provided, the
             :attr:`arraysize` attribute value is used instead.
-
         :returns:
-
             A sequence, each entry of which is a sequence of field values
             making up a row.  If no more rows are available, an empty sequence
             will be returned.
@@ -931,12 +861,9 @@ class Cursor():
 
     def fetchall(self):
         """Fetches all remaining rows of a query result.
-
         This method is part of the `DBAPI 2.0 specification
         <http://www.python.org/dev/peps/pep-0249/>`_.
-
         :returns:
-
             A sequence, each entry of which is a sequence of field values
             making up a row.
         """
@@ -947,7 +874,6 @@ class Cursor():
 
     def close(self):
         """Closes the cursor.
-
         This method is part of the `DBAPI 2.0 specification
         <http://www.python.org/dev/peps/pep-0249/>`_.
         """
@@ -955,7 +881,6 @@ class Cursor():
 
     def __iter__(self):
         """A cursor object is iterable to retrieve the rows from a query.
-
         This is a DBAPI 2.0 extension.
         """
         return self
@@ -1680,7 +1605,6 @@ class Connection():
     def cursor(self):
         """Creates a :class:`Cursor` object bound to this
         connection.
-
         This function is part of the `DBAPI 2.0 specification
         <http://www.python.org/dev/peps/pep-0249/>`_.
         """
@@ -1688,7 +1612,6 @@ class Connection():
 
     def commit(self):
         """Commits the current database transaction.
-
         This function is part of the `DBAPI 2.0 specification
         <http://www.python.org/dev/peps/pep-0249/>`_.
         """
@@ -1696,7 +1619,6 @@ class Connection():
 
     def rollback(self):
         """Rolls back the current database transaction.
-
         This function is part of the `DBAPI 2.0 specification
         <http://www.python.org/dev/peps/pep-0249/>`_.
         """
@@ -1706,9 +1628,7 @@ class Connection():
 
     def close(self):
         """Closes the database connection.
-
         If the connection is already closed, this raises ConnectionClosedError()
-
         This function is part of the `DBAPI 2.0 specification
         <http://www.python.org/dev/peps/pep-0249/>`_.
         """
