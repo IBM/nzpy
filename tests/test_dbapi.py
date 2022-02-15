@@ -55,6 +55,7 @@ def test_parallel_queries(db_table):
                 f1, f2, f3 = row
         c1.execute("drop table t1")
 
+
 def test_qmark(db_table):
     orig_paramstyle = nzpy.paramstyle
     try:
@@ -70,6 +71,7 @@ def test_qmark(db_table):
     finally:
         nzpy.paramstyle = orig_paramstyle
 
+
 def test_arraysize(db_table):
     with db_table.cursor() as c1:
         c1.arraysize = 3
@@ -77,6 +79,7 @@ def test_arraysize(db_table):
         retval = c1.fetchmany()
         assert len(retval) == c1.arraysize
         c1.execute("drop table t1")
+
 
 def test_date():
     val = nzpy.Date(2001, 2, 3)
@@ -130,6 +133,7 @@ def test_row_count(db_table):
         assert 5 == c1.rowcount
         c1.execute("drop table t1")
 
+
 def test_fetch_many(db_table):
     with db_table.cursor() as cursor:
         cursor.arraysize = 2
@@ -139,6 +143,7 @@ def test_fetch_many(db_table):
         assert 1 == len(cursor.fetchmany())
         assert 0 == len(cursor.fetchmany())
         cursor.execute("drop table t1")
+
 
 def test_iterator(db_table):
     with db_table.cursor() as cursor:
@@ -150,6 +155,7 @@ def test_iterator(db_table):
             f1 = next_f1
         cursor.execute("drop table t1")
 
+
 # Vacuum can't be run inside a transaction, so we need to turn
 # autocommit on.
 def test_vacuum(con):
@@ -157,16 +163,16 @@ def test_vacuum(con):
     with con.cursor() as cursor:
         cursor.execute("vacuum")
 
+
 def test_cursor_type(cursor):
     assert str(type(cursor)) == "<class 'nzpy.core.Cursor'>"
 
-'''
 
+'''
 def test_prepared_statement(con):
     with con.cursor() as cursor:
         cursor.execute('PREPARE gen_series AS SELECT generate_series(1, 10);')
         cursor.execute('EXECUTE gen_series')
-
 def test_numeric(db_table):
     orig_paramstyle = nzpy.paramstyle
     try:
@@ -180,8 +186,6 @@ def test_numeric(db_table):
                 f1, f2, f3 = row
     finally:
         nzpy.paramstyle = orig_paramstyle
-
-
 def test_named(db_table):
     orig_paramstyle = nzpy.paramstyle
     try:
@@ -196,8 +200,6 @@ def test_named(db_table):
                 f1, f2, f3 = row
     finally:
         nzpy.paramstyle = orig_paramstyle
-
-
 def test_format(db_table):
     orig_paramstyle = nzpy.paramstyle
     try:
@@ -211,8 +213,6 @@ def test_format(db_table):
                 f1, f2, f3 = row
     finally:
         nzpy.paramstyle = orig_paramstyle
-
-
 def test_pyformat(db_table):
     orig_paramstyle = nzpy.paramstyle
     try:
@@ -227,5 +227,4 @@ def test_pyformat(db_table):
                 f1, f2, f3 = row
     finally:
         nzpy.paramstyle = orig_paramstyle
-
 '''

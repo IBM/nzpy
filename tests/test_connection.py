@@ -1,7 +1,5 @@
 import nzpy
 import sys
-import socket
-import struct
 import pytest
 
 # Check if running in Jython
@@ -67,6 +65,7 @@ def testDatabaseMissing(db_kwargs):
 # This requires a line in pg_hba.conf that requires md5 for the database
 # nzpy_md5
 
+
 def testMd5(db_kwargs):
     db_kwargs["database"] = "nzpy_md5"
 
@@ -74,11 +73,13 @@ def testMd5(db_kwargs):
     with pytest.raises(nzpy.ProgrammingError, match='handshake'):
         nzpy.connect(**db_kwargs)
 
+
 @pytest.mark.usefixtures("trust_all_certificates")
 def testSsl(db_kwargs):
     db_kwargs["ssl"] = True
     with nzpy.connect(**db_kwargs):
         pass
+
 
 def testUnicodeDatabaseName(db_kwargs):
     db_kwargs["database"] = "nzpy_sn\uFF6Fw"
@@ -86,6 +87,7 @@ def testUnicodeDatabaseName(db_kwargs):
     # Should only raise an exception saying db doesn't exist
     with pytest.raises(nzpy.ProgrammingError, match='handshake'):
         nzpy.connect(**db_kwargs)
+
 
 def testBytesPassword(con, db_kwargs):
     # Create user
@@ -108,6 +110,7 @@ def testBytesPassword(con, db_kwargs):
 # This requires a line in pg_hba.conf that requires scram-sha-256 for the
 # database scram-sha-256
 
+
 def test_scram_sha_256(db_kwargs):
     db_kwargs["database"] = "nzpy_scram_sha_256"
 
@@ -123,43 +126,33 @@ def testNotify(con):
         cursor.execute("LISTEN test")
         cursor.execute("NOTIFY test")
         con.commit()
-
         cursor.execute("VALUES (1, 2), (3, 4), (5, 6)")
         assert len(con.notifications) == 1
         assert con.notifications[0][1] == "test"
-
 # This requires a line in pg_hba.conf that requires gss for the database
 # nzpy_gss
-
 def testGss(db_kwargs):
     db_kwargs["database"] = "nzpy_gss"
-
     # Should raise an exception saying gss isn't supported
     with pytest.raises(
             nzpy.InterfaceError,
             match="Authentication method 7 not supported by nzpy."):
         nzpy.connect(**db_kwargs)
-
 def testBytesDatabaseName(db_kwargs):
     """ Should only raise an exception saying db doesn't exist """
-
     db_kwargs["database"] = bytes("nzpy_sn\uFF6Fw", 'utf8')
     with pytest.raises(nzpy.ProgrammingError, match='handshake'):
         nzpy.connect(**db_kwargs)
-
 def test_broken_pipe(con, db_kwargs):
     with nzpy.connect(**db_kwargs) as db1:
         with db1.cursor() as cur1, con.cursor() as cur2:
             cur1.execute("select pg_backend_pid()")
             pid1 = cur1.fetchone()[0]
-
             cur2.execute("select pg_terminate_backend(%s)", (pid1,))
             try:
                 cur1.execute("select 1")
             except Exception as e:
                 assert isinstance(e, (socket.error, struct.error))
-
-
 def testApplicatioName(db_kwargs):
     app_name = 'my test application name'
     db_kwargs['application_name'] = app_name
@@ -168,8 +161,6 @@ def testApplicatioName(db_kwargs):
         cur.execute(
             'select application_name from pg_stat_activity '
             ' where pid = pg_backend_pid()')
-
         application_name = cur.fetchone()[0]
         assert application_name == app_name
-
 '''

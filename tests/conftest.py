@@ -1,16 +1,15 @@
-from os import environ
 import nzpy
 import pytest
 import sys
 import subprocess
-import pdb
+
 
 @pytest.fixture(scope="class")
 def db_kwargs():
     db_connect = {
         'user': 'admin',
         'password': 'password',
-        'database': 'nzpy_test'   
+        'database': 'nzpy_test'
     }
 
     try:
@@ -26,15 +25,15 @@ def con(request, db_kwargs):
         sql = ['''nzsql -d "system" -Axc "drop database nzpy_test" ''', ]
         newProc = subprocess.Popen(sql, stdout=subprocess.PIPE)
         newProc.wait()
-    except Exception as exp:
-        pass #consume exception is database does not exist
+    except Exception:
+        pass  # consume exception is database does not exist
     try:
         sql = ['''nzsql -d "system" -Axc "create database nzpy_test" ''', ]
         newProc = subprocess.Popen(sql, stdout=subprocess.PIPE)
         newProc.wait()
     except Exception as exp:
         print(exp)
- 
+
     conn = nzpy.connect(**db_kwargs)
 
     def fin():
