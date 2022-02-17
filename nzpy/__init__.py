@@ -1,11 +1,17 @@
-from nzpy.core import (
-    Warning, DataError, DatabaseError, InterfaceError, ProgrammingError,
-    Error, OperationalError, IntegrityError, InternalError, NotSupportedError,
-    ArrayContentNotHomogenousError, ArrayDimensionsNotConsistentError,
-    ArrayContentNotSupportedError, Connection, Cursor, Binary, Date,
-    DateFromTicks, Time, TimeFromTicks, Timestamp, TimestampFromTicks, BINARY,
-    Interval, PGEnum, PGJson, PGJsonb, PGTsvector, PGText, PGVarchar, LogOptions)
+from nzpy.core import (ArrayContentNotHomogenousError,
+                       ArrayContentNotSupportedError,
+                       ArrayDimensionsNotConsistentError, BINARY,
+                       Binary, Connection, Cursor, DataError,
+                       DatabaseError, Date, DateFromTicks, Error,
+                       IntegrityError, InterfaceError, InternalError,
+                       Interval, LogOptions, NotSupportedError,
+                       OperationalError, PGEnum, PGJson, PGJsonb,
+                       PGText, PGTsvector, PGVarchar, ProgrammingError,
+                       Time, TimeFromTicks, Timestamp, TimestampFromTicks,
+                       Warning)
+
 from ._version import get_versions
+
 __version__ = get_versions()['version']
 del get_versions
 
@@ -41,14 +47,17 @@ __author__ = "Mathieu Fenniak"
 
 
 def connect(user, host='localhost', unix_sock=None, port=5432, database=None,
-            password=None, ssl=None, securityLevel= 0, timeout=None, application_name=None,
-            max_prepared_statements=1000, datestyle = 'ISO', logLevel = 0, tcp_keepalive=True,
-            char_varchar_encoding='latin', logOptions=LogOptions.Inherit, pgOptions=None):
+            password=None, ssl=None, securityLevel=0, timeout=None,
+            application_name=None, max_prepared_statements=1000,
+            datestyle='ISO', logLevel=0, tcp_keepalive=True,
+            char_varchar_encoding='latin', logOptions=LogOptions.Inherit,
+            pgOptions=None):
 
-
-    return Connection(user, host, unix_sock, port, database, password, ssl, securityLevel,
-                      timeout,application_name, max_prepared_statements, datestyle, logLevel,
-                      tcp_keepalive, char_varchar_encoding, logOptions, pgOptions)
+    return Connection(user, host, unix_sock, port, database, password, ssl,
+                      securityLevel, timeout, application_name,
+                      max_prepared_statements, datestyle, logLevel,
+                      tcp_keepalive, char_varchar_encoding,
+                      logOptions, pgOptions)
 
 
 apilevel = "2.0"
