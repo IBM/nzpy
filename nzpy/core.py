@@ -1,29 +1,32 @@
-from datetime import (
-    timedelta as Timedelta, datetime as Datetime, date, time)
-from warnings import warn
-import socket
-import platform
-import getpass
-from decimal import Decimal
-from collections import deque, defaultdict
-from itertools import count, islice
-from uuid import UUID
-from copy import deepcopy
-from calendar import timegm
-from distutils.version import LooseVersion
-from struct import Struct
-import struct
-from time import localtime
-import nzpy
-from . import handshake, numeric
-from json import loads, dumps
-from os import path
-import logging
-import logging.handlers 
-from ipaddress import (ip_address, IPv4Address, IPv6Address, ip_network, IPv4Network, IPv6Network)
-from datetime import timezone as Timezone
 import datetime
 import enum
+import getpass
+import logging
+import logging.handlers
+import platform
+import socket
+import struct
+from calendar import timegm
+from collections import defaultdict, deque
+from copy import deepcopy
+from datetime import (date, datetime as Datetime,
+                      time, timedelta as Timedelta)
+from datetime import timezone as Timezone
+from decimal import Decimal
+from distutils.version import LooseVersion
+from ipaddress import (IPv4Address, IPv4Network, IPv6Address,
+                       IPv6Network, ip_address, ip_network)
+from itertools import count, islice
+from json import dumps, loads
+from os import path
+from struct import Struct
+from time import localtime
+from uuid import UUID
+from warnings import warn
+
+import nzpy
+
+from . import handshake, numeric
 
 # Copyright (c) 2007-2009, Mathieu Fenniak
 # Copyright (c) The Contributors
@@ -55,18 +58,24 @@ import enum
 
 __author__ = "Mathieu Fenniak"
 
-
 ZERO = Timedelta(0)
 BINARY = bytes
+
 
 class LogOptions(enum.IntFlag):
     Disabled = 0
     Inherit = enum.auto()  # inherit the logging settings from the caller
-    Logfile = enum.auto()  # add 
+    Logfile = enum.auto()  # add
 
 
 class Interval():
-    """An Interval represents a measurement of time.  In PostgreSQL, an interval is defined in the measure of months, days, and microseconds; as such, the nzpy interval type represents the same information. Note that values of the :attr:`microseconds`, :attr:`days` and :attr:`months` properties are independently measured and cannot be converted to each other.  A month may be 28, 29, 30, or 31 days, and a day may occasionally be lengthened slightly by a leap second.
+    """An Interval represents a measurement of time.  In PostgreSQL, an
+    interval is defined in the measure of months, days, and microseconds; as
+    such, the nzpy interval type represents the same information.
+    Note that values of the :attr:`microseconds`, :attr:`days` and
+    :attr:`months` properties are independently measured and cannot be
+    converted to each other.  A month may be 28, 29, 30, or 31 days, and a day
+    may occasionally be lengthened slightly by a leap second.
     .. attribute:: microseconds
         Measure of microseconds in the interval.
         The microseconds value is constrained to fit into a signed 64-bit
@@ -126,8 +135,8 @@ class Interval():
 
     def __eq__(self, other):
         return other is not None and isinstance(other, Interval) and \
-            self.months == other.months and self.days == other.days and \
-            self.microseconds == other.microseconds
+               self.months == other.months and self.days == other.days and \
+               self.microseconds == other.microseconds
 
     def __neq__(self, other):
         return not self.__eq__(other)
@@ -191,7 +200,6 @@ c_pack, c_unpack = pack_funcs('c')
 bh_pack, bh_unpack = pack_funcs('bh')
 cccc_pack, cccc_unpack = pack_funcs('cccc')
 
-
 min_int2, max_int2 = -2 ** 15, 2 ** 15
 min_int4, max_int4 = -2 ** 31, 2 ** 31
 min_int8, max_int8 = -2 ** 63, 2 ** 63
@@ -225,9 +233,11 @@ class InterfaceError(Error):
     """
     pass
 
+
 class ConnectionClosedError(InterfaceError):
     """An interface error, which identifies error occurring due tothe underlying
     connection being already closed"""
+
     def __init__(self, msg=None):
         super().__init__(msg if msg is not None else "connection is closed")
 
@@ -397,7 +407,7 @@ def convert_paramstyle(style, query):
     # I don't see any way to avoid scanning the query string char by char,
     # so we might as well take that careful approach and create a
     # state-based scanner.  We'll use int variables for the state.
-    OUTSIDE = 0    # outside quoted string
+    OUTSIDE = 0  # outside quoted string
     INSIDE_SQ = 1  # inside single-quote string '...'
     INSIDE_QI = 2  # inside quoted identifier   "..."
     INSIDE_ES = 3  # inside escaped single-quote string, E'...'
@@ -583,10 +593,11 @@ def timestamptz_send_float(v):
 # UTC, but providing that additional information can permit conversion
 # to local.
 def timestamptz_recv_integer(data, offset, length):
-    return (data[offset:offset+length]).decode("utf-8")
+    return (data[offset:offset + length]).decode("utf-8")
+
 
 def timestamptz_recv_float(data, offset, length):
-    return (data[offset:offset+length]).decode("utf-8") 
+    return (data[offset:offset + length]).decode("utf-8")
 
 
 def interval_send_integer(v):
@@ -620,11 +631,11 @@ def interval_send_float(v):
 
 
 def interval_recv_integer(data, offset, length):
-    return (data[offset:offset + length]).decode("utf-8") 
+    return (data[offset:offset + length]).decode("utf-8")
 
 
 def interval_recv_float(data, offset, length):
-    return (data[offset:offset + length]).decode("utf-8") 
+    return (data[offset:offset + length]).decode("utf-8")
 
 
 def int8_recv(data, offset, length):
@@ -661,7 +672,7 @@ def uuid_send(v):
 
 
 def uuid_recv(data, offset, length):
-    return UUID(bytes=data[offset:offset+length])
+    return UUID(bytes=data[offset:offset + length])
 
 
 def bool_send(v):
@@ -735,7 +746,6 @@ class Cursor():
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
-
     @property
     def connection(self):
         warn("DB-API extension cursor.connection used", stacklevel=3)
@@ -791,8 +801,8 @@ class Cursor():
             self.clear()
 
             if not self._c.in_transaction and not self._c.autocommit:
-               self._c.execute(self, "begin", None)
-               self._c.in_transaction = True
+                self._c.execute(self, "begin", None)
+                self._c.in_transaction = True
             self._c.execute(self, operation, args)
         except AttributeError as e:
             if self._c is None:
@@ -917,6 +927,7 @@ class Cursor():
         self._cached_rows.clear()
         self.notices.clear()
 
+
 # Message codes
 NOTICE_RESPONSE = b"N"
 AUTHENTICATION_REQUEST = b"R"
@@ -984,53 +995,54 @@ IDLE = b"I"
 IDLE_IN_TRANSACTION = b"T"
 IDLE_IN_FAILED_TRANSACTION = b"E"
 
+
 class DbosTupleDesc():
 
-	def __init__(self):
-        
-         self.version           = None
-         self.nullsAllowed      = None        
-         self.sizeWord          = None
-         self.sizeWordSize      = None	
-         self.numFixedFields    = None	
-         self.numVaryingFields  = None	 
-         self.fixedFieldsSize   = None	
-         self.maxRecordSize     = None	
-         self.numFields         = None	
-         self.field_type 	    = []     
-         self.field_size  	    = []     
-         self.field_trueSize    = [] 	
-         self.field_offset      = [] 	
-         self.field_physField   = [] 	
-         self.field_logField    = [] 	
-         self.field_nullAllowed = []		
-         self.field_fixedSize   = [] 	
-         self.field_springField = [] 	
-         self.DateStyle         = None
-         self.EuroDates         = None
-         self.DBcharset         = None
-         self.EnableTime24      = None
+    def __init__(self):
+        self.version = None
+        self.nullsAllowed = None
+        self.sizeWord = None
+        self.sizeWordSize = None
+        self.numFixedFields = None
+        self.numVaryingFields = None
+        self.fixedFieldsSize = None
+        self.maxRecordSize = None
+        self.numFields = None
+        self.field_type = []
+        self.field_size = []
+        self.field_trueSize = []
+        self.field_offset = []
+        self.field_physField = []
+        self.field_logField = []
+        self.field_nullAllowed = []
+        self.field_fixedSize = []
+        self.field_springField = []
+        self.DateStyle = None
+        self.EuroDates = None
+        self.DBcharset = None
+        self.EnableTime24 = None
 
-#Connection status
+
+# Connection status
 CONN_NOT_CONNECTED = 0
-CONN_CONNECTED = 1      
-CONN_EXECUTING = 2       
-CONN_FETCHING = 3        
-CONN_CANCELLED = 4 
+CONN_CONNECTED = 1
+CONN_EXECUTING = 2
+CONN_FETCHING = 3
+CONN_CANCELLED = 4
 
 # External table stuff (copied from nde/client/exttable.h)
 
-EXTAB_SOCK_DATA  = 1  # block of records
+EXTAB_SOCK_DATA = 1  # block of records
 EXTAB_SOCK_ERROR = 2  # error message
-EXTAB_SOCK_DONE  = 3  # normal wrap-up
-EXTAB_SOCK_FLUSH = 4  # Flush the current buffer/data      
+EXTAB_SOCK_DONE = 3  # normal wrap-up
+EXTAB_SOCK_FLUSH = 4  # Flush the current buffer/data
 
 # NZ datatype
-NzTypeRecAddr = 1 
-NzTypeDouble = 2 
-NzTypeInt = 3 
+NzTypeRecAddr = 1
+NzTypeDouble = 2
+NzTypeInt = 3
 NzTypeFloat = 4
-NzTypeMoney = 5 
+NzTypeMoney = 5
 NzTypeDate = 6
 NzTypeNumeric = 7
 NzTypeTime = 8
@@ -1042,51 +1054,56 @@ NzTypeInt1 = 13
 NzTypeBinary = 14
 NzTypeChar = 15
 NzTypeVarChar = 16
-NzDEPR_Text = 17            # OBSOLETE 3.0: BLAST Era Large 'text' Object    
-NzTypeUnknown = 18          # corresponds to PG UNKNOWNOID data type - an untyped string literal
+NzDEPR_Text = 17
+#  OBSOLETE 3.0: BLAST Era Large 'text' Object
+NzTypeUnknown = 18
+#  corresponds to PG UNKNOWNOID data type - an untyped string literal
 NzTypeInt2 = 19
 NzTypeInt8 = 20
 NzTypeVarFixedChar = 21
 NzTypeGeometry = 22
 NzTypeVarBinary = 23
-NzDEPR_Blob = 24            # OBSOLETE 3.0: BLAST Era Large 'binary' Object
+NzDEPR_Blob = 24
+#  OBSOLETE 3.0: BLAST Era Large 'binary' Object
 NzTypeNChar = 25
 NzTypeNVarChar = 26
-NzDEPR_NText = 27           # OBSOLETE 3.0: BLAST Era Large 'nchar text' Object
-#skip 28
-#skip 29
+NzDEPR_NText = 27
+#  OBSOLETE 3.0: BLAST Era Large 'nchar text' Object
+#  skip 28
+#  skip 29
 NzTypeJson = 30
 NzTypeJsonb = 31
 NzTypeJsonpath = 32
-NzTypeLastEntry = 33        # KEEP THIS ENTRY LAST - used internally to size an array
+NzTypeLastEntry = 33
+#  KEEP THIS ENTRY LAST - used internally to size an array
 
-# this is version of nzpy driver
+#  this is version of nzpy driver
 nzpy_client_version = "Release 11.1.0.0"
 
 dataType = {
-            NzTypeChar:         "NzTypeChar",
-            NzTypeVarChar:      "NzTypeVarChar",
-            NzTypeVarFixedChar: "NzTypeVarFixedChar",
-            NzTypeGeometry:     "NzTypeGeometry",
-            NzTypeVarBinary:    "NzTypeVarBinary",
-            NzTypeNChar:        "NzTypeNChar",
-            NzTypeNVarChar:     "NzTypeNVarChar",
-            NzTypeJson:         "NzTypeJson",
-            NzTypeJsonb:        "NzTypeJsonb",
-            NzTypeJsonpath:     "NzTypeJsonpath"
-                
-           }
+    NzTypeChar: "NzTypeChar",
+    NzTypeVarChar: "NzTypeVarChar",
+    NzTypeVarFixedChar: "NzTypeVarFixedChar",
+    NzTypeGeometry: "NzTypeGeometry",
+    NzTypeVarBinary: "NzTypeVarBinary",
+    NzTypeNChar: "NzTypeNChar",
+    NzTypeNVarChar: "NzTypeNVarChar",
+    NzTypeJson: "NzTypeJson",
+    NzTypeJsonb: "NzTypeJsonb",
+    NzTypeJsonpath: "NzTypeJsonpath"
+
+}
 
 arr_trans = dict(zip(map(ord, "[] 'u"), list('{}') + [None] * 3))
 
 
 class Connection():
-
     # DBAPI Extension: supply exceptions as attributes on the connection
     Warning = property(lambda self: self._getError(Warning))
     Error = property(lambda self: self._getError(Error))
     InterfaceError = property(lambda self: self._getError(InterfaceError))
-    ConnectionClosedError = property(lambda self: self._getError(ConnectionClosedError))
+    ConnectionClosedError = property(lambda self:
+                                     self._getError(ConnectionClosedError))
     DatabaseError = property(lambda self: self._getError(DatabaseError))
     OperationalError = property(lambda self: self._getError(OperationalError))
     IntegrityError = property(lambda self: self._getError(IntegrityError))
@@ -1101,13 +1118,13 @@ class Connection():
     def __exit__(self, exc_type, exc_value, traceback):
         try:
             self.close()
-        except ConnectionClosedError as e:
+        except ConnectionClosedError:
             pass
 
     def __del__(self):
         try:
             self.close()
-        except ConnectionClosedError as e:
+        except ConnectionClosedError:
             pass
 
     def _getError(self, error):
@@ -1118,43 +1135,50 @@ class Connection():
 
     def __init__(
             self, user, host, unix_sock, port, database, password, ssl,
-            securityLevel, timeout, application_name, max_prepared_statements, datestyle, logLevel, tcp_keepalive, char_varchar_encoding, logOptions=LogOptions.Inherit, pgOptions=None):
+            securityLevel, timeout, application_name,
+            max_prepared_statements, datestyle, logLevel, tcp_keepalive,
+            char_varchar_encoding, logOptions=LogOptions.Inherit,
+            pgOptions=None):
         self._char_varchar_encoding = char_varchar_encoding
         self._client_encoding = "utf8"
         self._commands_with_count = (
             b"INSERT", b"DELETE", b"UPDATE"
-            )
+        )
         self.notifications = deque(maxlen=100)
         self.parameter_statuses = deque(maxlen=100)
         self.max_prepared_statements = int(max_prepared_statements)
 
         # honor logging.* log level constants if specified
-        if logLevel not in (logging.DEBUG, logging.ERROR, logging.CRITICAL, logging.FATAL, logging.WARN,
-                logging.WARNING):
+        if logLevel not in (logging.DEBUG, logging.ERROR,
+                            logging.CRITICAL, logging.FATAL,
+                            logging.WARN, logging.WARNING):
             if logLevel == 0:
-                logLevel= logging.DEBUG
+                logLevel = logging.DEBUG
             elif logLevel == 1:
-                logLevel= logging.INFO
+                logLevel = logging.INFO
             elif logLevel == 2:
-                logLevel= logging.WARNING
-            else: # else default to INFO
+                logLevel = logging.WARNING
+            else:  # else default to INFO
                 logLevel = logging.INFO
 
-        # if no logging has been setup by the caller, and no filename is specified
+        # if no logging has been setup by the caller,
+        # and no filename is specified
         # then come up with a file name
-        self.log = logging.getLogger(f'nzpy.Connection[{database}]')
+        self.log = logging.getLogger("nzpy.Connection["+database+"}]")
         self.log.setLevel(logLevel)
 
         if logOptions & LogOptions.Logfile:
-            h = logging.handlers.RotatingFileHandler('nzpy.log', maxBytes=1024**3*10)
-            fmt = logging.Formatter('%(asctime)s (%(process)s) [%(name)s:%(filename)s:%(lineno)s] %(levelname)s: %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S.000000 %Z')
+            h = logging.handlers.\
+                RotatingFileHandler('nzpy.log', maxBytes=1024 ** 3 * 10)
+            fmt = logging.Formatter(
+                '%(asctime)s (%(process)s) [%(name)s:%(filename)s:'
+                '%(lineno)s] %(levelname)s: %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S.000000 %Z')
             h.setFormatter(fmt)
             self.log.addHandler(h)
         if not logOptions & LogOptions.Inherit:
             # don't send log messages to the parent loggers
             self.log.propagate = False
-
 
         if user is None:
             raise InterfaceError(
@@ -1171,11 +1195,11 @@ class Connection():
             self.password = password
 
         self.autocommit = True
-            
+
         self._caches = {}
         self.commandNumber = -1
         self.status = None
-        
+
         try:
             if unix_sock is None and host is not None:
                 self._usock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -1199,7 +1223,7 @@ class Connection():
             self._sock = self._usock.makefile(mode="rwb")
             if tcp_keepalive:
                 self._usock.setsockopt(
-                   socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+                    socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         except socket.error as e:
             self._usock.close()
             raise InterfaceError("communication error", e)
@@ -1229,9 +1253,8 @@ class Connection():
         def array_in(data, idx, length):
             arr = []
             prev_c = None
-            for c in data[idx:idx+length].decode(
-                    self._client_encoding).translate(
-                    trans_tab).replace('NULL', 'None'):
+            for c in data[idx:idx + length].decode(self._client_encoding).\
+                    translate(trans_tab).replace('NULL', 'None'):
                 if c not in ('[', ']', ',', 'N') and prev_c in ('[', ','):
                     arr.extend("Decimal('")
                 elif c in (']', ',') and prev_c not in ('[', ']', ',', 'e'):
@@ -1274,7 +1297,7 @@ class Connection():
             return values
 
         def vector_in(data, idx, length):
-            return eval('[' + data[idx:idx+length].decode(
+            return eval('[' + data[idx:idx + length].decode(
                 self._client_encoding).replace(' ', ',') + ']')
 
         def text_recv(data, offset, length):
@@ -1296,7 +1319,7 @@ class Connection():
                 hour, minute, int(sec), int((sec - int(sec)) * 1000000))
 
         def date_in(data, offset, length):
-            d = data[offset:offset+length].decode(self._client_encoding)
+            d = data[offset:offset + length].decode(self._client_encoding)
             try:
                 return date(int(d[:4]), int(d[5:7]), int(d[8:10]))
             except ValueError:
@@ -1403,60 +1426,76 @@ class Connection():
         self.pg_types[869] = (FC_TEXT, inet_in)  # inet
 
         def conn_send_query():
-        
-            if not self.execute(self._cursor, "set nz_encoding to 'utf8'", None):
+
+            if not self.execute(self._cursor, "set nz_encoding to "
+                                              "'utf8'", None):
                 return False
-        
-            #Set the Datestyle to the format the driver expects it to be in */
+
+            # Set the Datestyle to the format the driver expects it to be in */
             if datestyle == 'MDY':
                 query = "set DateStyle to 'US'"
             elif datestyle == 'DMY':
                 query = "set DateStyle to 'EUROPEAN'"
             else:
-                query = "set DateStyle to 'ISO'"  
-            
-            if not self.execute(self._cursor, query, None):
-                return False           
-           
-            client_info = "select version(), 'Netezza Python Client Version: {}', '{}', 'OS Platform: {}', 'OS Username: {}'"
-            
-            query = client_info.format(nzpy_client_version,platform.uname().machine,platform.system(),getpass.getuser())
-            
+                query = "set DateStyle to 'ISO'"
+
             if not self.execute(self._cursor, query, None):
                 return False
-            else: 
+
+            client_info = "select version(), 'Netezza Python " \
+                          "Client Version: {}', " \
+                          "'{}', 'OS Platform: {}', 'OS Username: {}'"
+
+            query = client_info.format(nzpy_client_version,
+                                       platform.uname().machine,
+                                       platform.system(),
+                                       getpass.getuser())
+
+            if not self.execute(self._cursor, query, None):
+                return False
+            else:
                 results = self._cursor.fetchall()
                 for c1, c2, c3, c4, c5 in results:
-                    self.log.debug("c1 = %s, c2 = %s, c3 = %s, c4 = %s, c5 = %s" % (c1,c2,c3,c4,c5))
-                
+                    self.log.debug("c1 = %s, c2 = %s, c3 = %s, c4 = %s, "
+                                   "c5 = %s" % (c1, c2, c3, c4, c5))
+
             client_info = "SET CLIENT_VERSION = '{}'"
             query = client_info.format(nzpy_client_version)
             if not self.execute(self._cursor, query, None):
                 return False
-                
-            if not self.execute(self._cursor, "select ascii(' ') as space, encoding as ccsid from _v_database where objid = current_db", None):
+
+            if not self.execute(self._cursor, "select ascii(' ') as space, "
+                                              "encoding as ccsid "
+                                              "from _v_database "
+                                              "where objid = current_db",
+                                None):
                 return False
-            else: 
+            else:
                 results = self._cursor.fetchall()
                 for c1, c2 in results:
-                    self.log.debug("c1 = %s, c2 = %s" % (c1,c2))
-                    
-            if not self.execute(self._cursor, "select feature from _v_odbc_feature where spec_level = '3.5'", None):
+                    self.log.debug("c1 = %s, c2 = %s" % (c1, c2))
+
+            if not self.execute(self._cursor, "select feature from "
+                                              "_v_odbc_feature "
+                                              "where spec_level = '3.5'",
+                                None):
                 return False
-            else: 
+            else:
                 results = self._cursor.fetchall()
                 for c1 in results:
                     self.log.debug("c1 = %s" % (c1))
-            
-            if not self.execute(self._cursor, "select identifier_case, current_catalog, current_user", None):
+
+            if not self.execute(self._cursor, "select identifier_case, "
+                                              "current_catalog, "
+                                              "current_user", None):
                 return False
-            else: 
+            else:
                 results = self._cursor.fetchall()
                 for c1, c2, c3 in results:
-                    self.log.debug("c1 = %s, c2 = %s, c3 = %s" % (c1,c2,c3))
-                
+                    self.log.debug("c1 = %s, c2 = %s, c3 = %s" % (c1, c2, c3))
+
             return True
-   
+
         self.message_types = {
             PARAMETER_STATUS: self.handle_PARAMETER_STATUS,
             READY_FOR_QUERY: self.handle_READY_FOR_QUERY,
@@ -1476,27 +1515,29 @@ class Connection():
             COPY_DATA: self.handle_COPY_DATA,
             COPY_IN_RESPONSE: self.handle_COPY_IN_RESPONSE,
             COPY_OUT_RESPONSE: self.handle_COPY_OUT_RESPONSE}
-        
+
         hs = handshake.Handshake(self._usock, self._sock, ssl, self.log)
-        response = hs.startup(database, securityLevel, user, password, pgOptions)
-        
-        if response is not False: 
+        response = hs.startup(database, securityLevel,
+                              user, password, pgOptions)
+
+        if response is not False:
             self._flush = response.flush
             self._read = response.read
-            self._write = response.write        
-        else: 
+            self._write = response.write
+        else:
             raise ProgrammingError("Error in handshake")
-        
+
         self._cursor = self.cursor()
-        code = self.error = None
-        
+        #  code = self.error = None
+        self.error = None
+
         if not conn_send_query():
             self.log.warning("Error sending initial setup queries")
-            
+
         self.commandNumber = 0
-                
+
         if self.error is not None:
-            raise ProgrammingError(self.error)    
+            raise ProgrammingError(self.error)
 
         self.in_transaction = False
 
@@ -1628,7 +1669,8 @@ class Connection():
 
     def close(self):
         """Closes the database connection.
-        If the connection is already closed, this raises ConnectionClosedError()
+        If the connection is already closed,
+        this raises ConnectionClosedError()
         This function is part of the `DBAPI 2.0 specification
         <http://www.python.org/dev/peps/pep-0249/>`_.
         """
@@ -1710,47 +1752,55 @@ class Connection():
         for i in range(count):
             name = data[idx:data.find(NULL_BYTE, idx)]
             idx += len(name) + 1
-            field = dict(
-                zip((
-                    "type_oid", "type_size","type_modifier","format"), ihic_unpack(data, idx)))
+            field = dict(zip(("type_oid", "type_size", "type_modifier",
+                              "format"), ihic_unpack(data, idx)))
             field['name'] = name
             idx += 11
             cursor.ps['row_desc'].append(field)
             field['nzpy_fc'], field['func'] = \
                 self.pg_types[field['type_oid']]
-    
-    def Prepare(self, cursor, query, vals):    
-        
+
+    def Prepare(self, cursor, query, vals):
+
         statement, make_args = convert_paramstyle(nzpy.paramstyle, query)
         args = make_args(vals)
         placeholderCount = query.count('?')
         if placeholderCount == 0:
             return query
-        if len(args) >= 65536 :
-                self.log.warning("got %d parameters but PostgreSQL only supports 65535 parameters", len(args))
-        if len(args) != placeholderCount :
-                self.log.warning("got %d parameters but the statement requires %d", len(args), placeholderCount)
-	
+        if len(args) >= 65536:
+            self.log.warning("got %d parameters but PostgreSQL only "
+                             "supports 65535 parameters", len(args))
+        if len(args) != placeholderCount:
+            self.log.warning("got %d parameters but the statement "
+                             "requires %d", len(args), placeholderCount)
+
         for arg in args:
-            if isinstance(arg, str) or isinstance(arg, datetime.time) or isinstance(arg, datetime.date) or isinstance(arg, datetime.datetime) or isinstance(arg, dict):
-                strfmt = "'{}'"                
+            if isinstance(arg, str) or isinstance(arg, datetime.time) or \
+                    isinstance(arg, datetime.date) or \
+                    isinstance(arg, datetime.datetime) or \
+                    isinstance(arg, dict):
+                strfmt = "'{}'"
                 query = query.replace('?', strfmt.format(arg), 1)
             elif isinstance(arg, bytes):
-                bytfmt = "x'{}'"                
-                query = query.replace('?', bytfmt.format(arg.decode(self._client_encoding)), 1)                
+                bytfmt = "x'{}'"
+                query = \
+                    query.replace('?',
+                                  bytfmt.
+                                  format(arg.decode(self._client_encoding)),
+                                  1)
             elif arg is None:
                 query = query.replace('?', 'NULL', 1)
             else:
                 query = query.replace('?', str(arg), 1)
-        
-        if statement.find('select') == 0 or statement.find('SELECT') == 0 :
+
+        if statement.find('select') == 0 or statement.find('SELECT') == 0:
             statement = statement + " ANALYZE"
             self.execute(cursor, statement, None)
-                        
-        return query            
-        
+
+        return query
+
     def execute(self, cursor, query, vals):
-        
+
         self.error = None
         cursor.notices = []
         cursor._row_count = -1
@@ -1758,54 +1808,56 @@ class Connection():
 
         if vals is None:
             vals = ()
-        else:    
+        else:
             query = self.Prepare(cursor, query, vals)
-            
+
         if self.status == CONN_EXECUTING:
             self._read(4)
-            
-        buf = bytearray( b'P\xFF\xFF\xFF\xFF')
-        
-        if self.commandNumber != -1 :
+
+        buf = bytearray(b'P\xFF\xFF\xFF\xFF')
+
+        if self.commandNumber != -1:
             self.commandNumber += 1
             buf = bytearray(b'P' + i_pack(self.commandNumber))
-            
+
         if self.commandNumber > 100000:
             self.commandNumber = 1
-        
+
         if query is not None:
             if isinstance(query, str):
                 query = query.encode('utf8')
         buf.extend(query + NULL_BYTE)
         self._write(buf)
         self._flush()
-        
+
         self.log.debug("Buffer sent to nps:%s", buf)
-        
+
         self.status = CONN_EXECUTING
-        
+
         response = self.connNextResultSet(cursor)
 
         if self.error is not None:
-            raise ProgrammingError(self.error)    
-            
+            raise ProgrammingError(self.error)
+
         return response
-        
+
     def connNextResultSet(self, cursor):
-            
+
         fname = None
         fh = None
-        
-        while(1):
+
+        while (1):
             response = self._read(1)
-            self.log.debug("Backend response: %s",response)
+            self.log.debug("Backend response: %s", response)
             self._read(4)
-            
-            if response == COMMAND_COMPLETE:  # portal query command, no tuples returned 
+
+            if response == COMMAND_COMPLETE:
+                #  portal query command, no tuples returned
                 length = i_unpack(self._read(4))[0]
                 data = self._read(length)
-                self.handle_COMMAND_COMPLETE(data,cursor)
-                self.log.debug ("Response received from backend: %s", str(data,self._client_encoding))
+                self.handle_COMMAND_COMPLETE(data, cursor)
+                self.log.debug("Response received from "
+                               "backend: %s", str(data, self._client_encoding))
                 continue
             if response == READY_FOR_QUERY:
                 return True
@@ -1817,189 +1869,206 @@ class Connection():
                 pass
             if response == b"P":
                 length = i_unpack(self._read(4))[0]
-                self.log.debug ("Response received from backend:%s", str(self._read(length),self._client_encoding))
+                self.log.debug("Response received from "
+                               "backend:%s", str(self._read(length),
+                                                 self._client_encoding))
                 continue
             if response == ERROR_RESPONSE:
                 length = i_unpack(self._read(4))[0]
-                self.error = str(self._read(length),self._client_encoding)
-                self.log.debug ("Response received from backend:%s", self.error)
+                self.error = str(self._read(length), self._client_encoding)
+                self.log.debug("Response received from backend:%s", self.error)
                 continue
             if response == ROW_DESCRIPTION:
                 length = i_unpack(self._read(4))[0]
                 cursor.ps = {'row_desc': []}
-                self.handle_ROW_DESCRIPTION(self._read(length),cursor)
+                self.handle_ROW_DESCRIPTION(self._read(length), cursor)
                 # We've got row_desc that allows us to identify what we're
                 # going to get back from this statement.
-                cursor.ps['input_funcs'] = tuple(f['func'] for f in cursor.ps['row_desc'])
+                cursor.ps['input_funcs'] = tuple(f['func'] for
+                                                 f in cursor.ps['row_desc'])
             if response == DATA_ROW:
                 length = i_unpack(self._read(4))[0]
                 self.handle_DATA_ROW(self._read(length), cursor)
             if response == b"X":
                 length = i_unpack(self._read(4))[0]
                 self.tupdesc = DbosTupleDesc()
-                self.Res_get_dbos_column_descriptions(self._read(length),self.tupdesc)
+                self.Res_get_dbos_column_descriptions(self._read(length),
+                                                      self.tupdesc)
                 continue
             if response == b"Y":
                 self.Res_read_dbos_tuple(cursor, self.tupdesc)
                 continue
-            if response == b"u": #unload - initialize application protocol
-                # in ODBC, the first 10 bytes are utilized to populate clientVersion, formatType and bufSize
-                # these are not needed in go lang, hence ignoring 10 bytes
+            if response == b"u":
+                #  unload - initialize application protocol
+                #  in ODBC, the first 10 bytes are utilized to
+                #  populate clientVersion, formatType and bufSize
+                #  these are not needed in go lang, hence ignoring 10 bytes
                 self._read(10)
                 # Next 16 bytes are Reserved Bytes for future extension
                 self._read(16)
                 # Get the filename (specified in dataobject)
                 length = i_unpack(self._read(4))[0]
                 fnameBuf = self._read(length)
-                fname = str(fnameBuf,self._client_encoding)
+                fname = str(fnameBuf, self._client_encoding)
                 try:
                     fh = open(fname, "w+")
                     self.log.debug("Successfully opened file: %s", fname)
-                    #file open successfully, send status back to datawriter                
+                    # file open successfully, send status back to datawriter
                     buf = bytearray(i_pack(0))
                     self._write(buf)
-                    self._flush()     
-                except:
+                    self._flush()
+                except Exception:
                     self.log.warning("Error while opening file")
-            
-            if response == b"U": # handle unload data 
+
+            if response == b"U":  # handle unload data
                 self.receiveAndWriteDatatoExternal(fname, fh)
-                
-            if response == b"l": 
+
+            if response == b"l":
                 self.xferTable()
-                
-            if response == b"x": # handle Ext Tbl parser abort 
+
+            if response == b"x":  # handle Ext Tbl parser abort
                 self._read(4)
                 self.log.warning("Error operation cancel")
-            
+
             if response == b"e":
-            
+
                 length = i_unpack(self._read(4))[0]
-                logDir = str(self._read(length-1),self._client_encoding)
-                
-                self._read(1)  # ignore one byte as it is null character at the end of the string
+                logDir = str(self._read(length - 1), self._client_encoding)
+
+                self._read(1)
+                #  ignore one byte as it is null character at
+                #  the end of the string
                 char = c_unpack(self._read(1))[0]
                 filenameBuf = bytearray(char)
-                while True :            
+                while True:
                     char = c_unpack(self._read(1))[0]
                     if char == b'\x00':
                         break
                     filenameBuf.extend(char)
-        
-                filename = str(filenameBuf,self._client_encoding)
+
+                filename = str(filenameBuf, self._client_encoding)
                 logType = i_unpack(self._read(4))[0]
                 if not self.getFileFromBE(logDir, filename, logType):
                     self.log.debug("Error in writing file received from BE")
                 continue
-            
-            if response == NOTICE_RESPONSE:            
+
+            if response == NOTICE_RESPONSE:
                 length = i_unpack(self._read(4))[0]
-                notice = str(self._read(length),self._client_encoding)
+                notice = str(self._read(length), self._client_encoding)
                 if notice.startswith('NOTICE:'):
                     notice = notice[len('NOTICE:'):]
                 notice = notice.strip().rstrip('\x00')
                 cursor.notices.append(notice)
-                self.log.debug ("Response received from backend:%s", notice)                              
-            
-            if response == b"I":         
+                self.log.debug("Response received from backend:%s", notice)
+
+            if response == b"I":
                 length = i_unpack(self._read(4))[0]
-                notice = str(self._read(length),self._client_encoding)
+                notice = str(self._read(length), self._client_encoding)
                 if notice.startswith('NOTICE:'):
                     notice = notice[len('NOTICE:'):]
                 notice = notice.strip().rstrip('\x00')
                 cursor.notices.append(notice)
-                self.log.debug ("Response received from backend:%s", notice)
+                self.log.debug("Response received from backend:%s", notice)
                 cursor._cached_rows.append([])
 
     def Res_get_dbos_column_descriptions(self, data, tupdesc):
-        
-        data_idx = 0 
-        tupdesc.version = i_unpack(data, data_idx)[0]         
-        tupdesc.nullsAllowed = i_unpack(data, data_idx+4)[0]      
-        tupdesc.sizeWord = i_unpack(data, data_idx+8)[0]          
-        tupdesc.sizeWordSize = i_unpack(data, data_idx+12)[0]      
-        tupdesc.numFixedFields = i_unpack(data, data_idx+16)[0]    
-        tupdesc.numVaryingFields = i_unpack(data, data_idx+20)[0]  
-        tupdesc.fixedFieldsSize = i_unpack(data, data_idx+24)[0]   
-        tupdesc.maxRecordSize = i_unpack(data, data_idx+28)[0]     
-        tupdesc.numFields = i_unpack(data, data_idx+32)[0] 
+
+        data_idx = 0
+        tupdesc.version = i_unpack(data, data_idx)[0]
+        tupdesc.nullsAllowed = i_unpack(data, data_idx + 4)[0]
+        tupdesc.sizeWord = i_unpack(data, data_idx + 8)[0]
+        tupdesc.sizeWordSize = i_unpack(data, data_idx + 12)[0]
+        tupdesc.numFixedFields = i_unpack(data, data_idx + 16)[0]
+        tupdesc.numVaryingFields = i_unpack(data, data_idx + 20)[0]
+        tupdesc.fixedFieldsSize = i_unpack(data, data_idx + 24)[0]
+        tupdesc.maxRecordSize = i_unpack(data, data_idx + 28)[0]
+        tupdesc.numFields = i_unpack(data, data_idx + 32)[0]
 
         data_idx += 36
         for ix in range(tupdesc.numFields):
             tupdesc.field_type.append(i_unpack(data, data_idx)[0])
-            tupdesc.field_size.append(i_unpack(data, data_idx+4)[0])     
-            tupdesc.field_trueSize.append(i_unpack(data, data_idx+8)[0])   
-            tupdesc.field_offset.append(i_unpack(data, data_idx+12)[0])    
-            tupdesc.field_physField.append(i_unpack(data, data_idx+16)[0])   
-            tupdesc.field_logField.append(i_unpack(data, data_idx+20)[0])  
-            tupdesc.field_nullAllowed.append(i_unpack(data, data_idx+24)[0])
-            tupdesc.field_fixedSize.append(i_unpack(data, data_idx+28)[0])  
-            tupdesc.field_springField.append(i_unpack(data, data_idx+32)[0])
+            tupdesc.field_size.append(i_unpack(data, data_idx + 4)[0])
+            tupdesc.field_trueSize.append(i_unpack(data, data_idx + 8)[0])
+            tupdesc.field_offset.append(i_unpack(data, data_idx + 12)[0])
+            tupdesc.field_physField.append(i_unpack(data, data_idx + 16)[0])
+            tupdesc.field_logField.append(i_unpack(data, data_idx + 20)[0])
+            tupdesc.field_nullAllowed.append(i_unpack(data, data_idx + 24)[0])
+            tupdesc.field_fixedSize.append(i_unpack(data, data_idx + 28)[0])
+            tupdesc.field_springField.append(i_unpack(data, data_idx + 32)[0])
             data_idx += 36
-        
-        tupdesc.DateStyle = i_unpack(data, data_idx)[0]         
-        tupdesc.EuroDates = i_unpack(data, data_idx+4)[0]                                         
-        
-    def Res_read_dbos_tuple(self, cursor, tupdesc): 
-        
+
+        tupdesc.DateStyle = i_unpack(data, data_idx)[0]
+        tupdesc.EuroDates = i_unpack(data, data_idx + 4)[0]
+
+    def Res_read_dbos_tuple(self, cursor, tupdesc):
+
         numFields = tupdesc.numFields
-        
+
         length = i_unpack(self._read(4))[0]
         self.log.debug("Length of the message from backend:%s", length)
         length = i_unpack(self._read(4))[0]
         self.log.debug("Length of the message from backend:%s", length)
         data = self._read(length)
         self.log.debug("Actual message is: %s", data)
-        
-        if length > tupdesc.maxRecordSize :
-            maxRecordSize = length
-            
-        # bitmaplen denotes the number of bytes bitmap sent by backend. For e.g.: for select 
-        # statement with 9 columns, we would receive 2 bytes bitmap.
-        bitmaplen = numFields // 8                
-        if (numFields % 8) > 0 :
-            bitmaplen+=1        
-            
+
+        #  if length > tupdesc.maxRecordSize:
+        #  maxRecordSize = length
+
+        #  bitmaplen denotes the number of bytes bitmap sent by
+        #  backend. For e.g.: for select
+        #  statement with 9 columns, we would receive 2 bytes bitmap.
+        bitmaplen = numFields // 8
+        if (numFields % 8) > 0:
+            bitmaplen += 1
+
         bitmap = []
         for i in range(bitmaplen):
-            # We ignore first 2 bytes as that denotes length of message. Now convert hex to dec 
-            hex = data[2+i:3+i].hex()
+            # We ignore first 2 bytes as that denotes
+            # length of message. Now convert hex to dec
+            hex = data[2 + i:3 + i].hex()
             dec = int(hex, 16)
-        
+
             # convert dec to binary
-            temp = decimalToBinary(dec,8)
+            temp = decimalToBinary(dec, 8)
             bitmap.extend(temp)
-               
+
         field_lf = 0
         cur_field = 0
         row = []
-        
-        while field_lf < numFields and cur_field < numFields :
-            
+
+        while field_lf < numFields and cur_field < numFields:
+
             fieldDataP = self.CTable_FieldAt(tupdesc, data, cur_field)
-            
-            # a bitmap with value of 1 denotes null column
-            if bitmap[tupdesc.field_physField[field_lf]] == 1 and tupdesc.nullsAllowed != 0 :
+
+            #  a bitmap with value of 1 denotes null column
+            if bitmap[tupdesc.field_physField[field_lf]] == 1 \
+                    and tupdesc.nullsAllowed != 0:
                 row.append(None)
-                self.log.debug("field=%d, value= NULL", cur_field+1)
+                self.log.debug("field=%d, value= NULL", cur_field + 1)
                 cur_field += 1
-                field_lf +=1
+                field_lf += 1
                 continue
-		
-            # Fldlen is byte-length of backend-datatype
-            # memsize is byte-length of ODBC-datatype or internal-datatype for (Numeric/Interval)
+
+            #  Fldlen is byte-length of backend-datatype
+            #  memsize is byte-length of ODBC-datatype or
+            #  internal-datatype for (Numeric/Interval)
             fldlen = self.CTable_i_fieldSize(tupdesc, cur_field)
             memsize = fldlen
             fldtype = self.CTable_i_fieldType(tupdesc, cur_field)
-            
-            if fldtype == NzTypeUnknown: 
+
+            if fldtype == NzTypeUnknown:
                 fldtype = NzTypeVarChar
                 memsize = memsize + 1
-            if fldtype == NzTypeChar or fldtype == NzTypeVarChar or fldtype == NzTypeVarFixedChar or fldtype == NzTypeGeometry or fldtype == NzTypeVarBinary:
+            if fldtype == NzTypeChar or fldtype == NzTypeVarChar or \
+                    fldtype == NzTypeVarFixedChar or \
+                    fldtype == NzTypeGeometry or fldtype == \
+                    NzTypeVarBinary:
                 memsize = memsize + 1
-            if fldtype == NzTypeNChar or fldtype == NzTypeNVarChar or fldtype == NzTypeJson or fldtype == NzTypeJsonb or fldtype == NzTypeJsonpath: 
+            if fldtype == NzTypeNChar or fldtype == NzTypeNVarChar or \
+                    fldtype == NzTypeJson or fldtype == NzTypeJsonb or \
+                    fldtype == NzTypeJsonpath:
                 memsize *= 4
-                memsize = memsize + 1 
+                memsize = memsize + 1
             if fldtype == NzTypeDate:
                 memsize = 12
             if fldtype == NzTypeTime:
@@ -2012,167 +2081,219 @@ class Connection():
                 memsize = 8
             if fldtype == NzTypeBool:
                 memsize = 1
-                
+
             if fldtype == NzTypeChar:
                 value = str(fieldDataP[:fldlen], self._char_varchar_encoding)
                 row.append(value)
-                self.log.debug("field=%d, datatype=CHAR, value=%s", cur_field+1,value)                
-                
+                self.log.debug("field=%d, datatype=CHAR, "
+                               "value=%s", cur_field + 1, value)
+
             if fldtype == NzTypeNChar or fldtype == NzTypeNVarChar:
-                cursize  = int.from_bytes(fieldDataP[0:2], 'little') - 2
-                value = str(fieldDataP[2:cursize+2], self._client_encoding)
+                cursize = int.from_bytes(fieldDataP[0:2], 'little') - 2
+                value = str(fieldDataP[2:cursize + 2], self._client_encoding)
                 row.append(value)
-                self.log.debug("field=%d, datatype=%s, value=%s", cur_field+1,dataType[fldtype], value)                
-                
-            if fldtype == NzTypeVarChar or fldtype == NzTypeVarFixedChar or fldtype == NzTypeGeometry or fldtype == NzTypeVarBinary or fldtype == NzTypeJson or fldtype == NzTypeJsonb or fldtype == NzTypeJsonpath:
-                cursize  = int.from_bytes(fieldDataP[0:2], 'little') - 2
-                value = str(fieldDataP[2:cursize+2], self._char_varchar_encoding)
+                self.log.debug("field=%d, datatype=%s, value=%s",
+                               cur_field + 1, dataType[fldtype], value)
+
+            if fldtype == NzTypeVarChar or fldtype == NzTypeVarFixedChar or \
+                    fldtype == NzTypeGeometry or fldtype == NzTypeVarBinary \
+                    or fldtype == NzTypeJson or fldtype == NzTypeJsonb or \
+                    fldtype == NzTypeJsonpath:
+                cursize = int.from_bytes(fieldDataP[0:2], 'little') - 2
+                value = str(fieldDataP[2:cursize + 2],
+                            self._char_varchar_encoding)
                 row.append(value)
-                self.log.debug("field=%d, datatype=%s, value=%s", cur_field+1,dataType[fldtype], value)
-                
-            if fldtype == NzTypeInt8:  #int64
-                value = int.from_bytes(fieldDataP[:fldlen], byteorder='little', signed=True)
+                self.log.debug("field=%d, datatype=%s, "
+                               "value=%s", cur_field + 1,
+                               dataType[fldtype], value)
+
+            if fldtype == NzTypeInt8:  # int64
+                value = int.from_bytes(fieldDataP[:fldlen],
+                                       byteorder='little', signed=True)
                 row.append(value)
-                self.log.debug("field=%d, datatype=NzTypeInt8, value=%s", cur_field+1, value)
-            
-            if fldtype == NzTypeInt:   #int32
-                value = int.from_bytes(fieldDataP[:fldlen], byteorder='little', signed=True)
+                self.log.debug("field=%d, datatype=NzTypeInt8, "
+                               "value=%s", cur_field + 1, value)
+
+            if fldtype == NzTypeInt:  # int32
+                value = int.from_bytes(fieldDataP[:fldlen],
+                                       byteorder='little', signed=True)
                 row.append(value)
-                self.log.debug("field=%d, datatype=NzTypeInt4, value=%s", cur_field+1, value)
-                
-            if fldtype == NzTypeInt2:  #int16
-                value = int.from_bytes(fieldDataP[:fldlen], byteorder='little', signed=True)
+                self.log.debug("field=%d, datatype=NzTypeInt4, "
+                               "value=%s", cur_field + 1, value)
+
+            if fldtype == NzTypeInt2:  # int16
+                value = int.from_bytes(fieldDataP[:fldlen],
+                                       byteorder='little', signed=True)
                 row.append(value)
-                self.log.debug("field=%d, datatype=NzTypeInt2, value=%s", cur_field+1, value)
-                
-            if fldtype == NzTypeInt1:  #int8
-                value = int.from_bytes(fieldDataP[:fldlen], byteorder='little', signed=True)
+                self.log.debug("field=%d, datatype=NzTypeInt2, "
+                               "value=%s", cur_field + 1, value)
+
+            if fldtype == NzTypeInt1:  # int8
+                value = int.from_bytes(fieldDataP[:fldlen],
+                                       byteorder='little', signed=True)
                 row.append(value)
-                self.log.debug("field=%d, datatype=NzTypeInt1, value=%s", cur_field+1, value)
-                
-            if fldtype == NzTypeDouble: 
+                self.log.debug("field=%d, datatype=NzTypeInt1, "
+                               "value=%s", cur_field + 1, value)
+
+            if fldtype == NzTypeDouble:
                 value = struct.unpack('d', fieldDataP[:fldlen])[0]
                 row.append(value)
-                self.log.debug("field=%d, datatype=NzTypeDouble, value=%s", cur_field+1, value)
-                
+                self.log.debug("field=%d, datatype=NzTypeDouble, "
+                               "value=%s", cur_field + 1, value)
+
             if fldtype == NzTypeFloat:
                 value = struct.unpack('f', fieldDataP[:fldlen])[0]
                 row.append(value)
-                self.log.debug("field=%d, datatype=NzTypeFloat, value=%s", cur_field+1, value)                
-            
-            if fldtype == NzTypeDate:                   
-                workspace = int.from_bytes(fieldDataP[:fldlen], byteorder='little', signed=True)
-                date_value = j2date(workspace + date2j(2000, 1, 1))                
+                self.log.debug("field=%d, datatype=NzTypeFloat, "
+                               "value=%s", cur_field + 1, value)
+
+            if fldtype == NzTypeDate:
+                workspace = int.from_bytes(fieldDataP[:fldlen],
+                                           byteorder='little', signed=True)
+                date_value = j2date(workspace + date2j(2000, 1, 1))
                 date_format = "{0:02d}-{1:02d}-{2:02d}"
-                value = date_format.format(date_value[0],date_value[1],date_value[2])
+                value = date_format.format(date_value[0],
+                                           date_value[1], date_value[2])
                 row.append(value)
-                self.log.debug("field=%d, datatype=DATE, value=%s", cur_field+1, value)
-                
+                self.log.debug("field=%d, datatype=DATE, "
+                               "value=%s", cur_field + 1, value)
+
             if fldtype == NzTypeTime:
-                workspace = int.from_bytes(fieldDataP[:fldlen], byteorder='little', signed=True)
+                workspace = int.from_bytes(fieldDataP[:fldlen],
+                                           byteorder='little', signed=True)
                 time_value = time2struct(workspace)
                 time_format = "{0:02d}:{1:02d}:{2:02d}"
-                value = time_format.format(time_value[0],time_value[1],time_value[2])
+                value = time_format.format(time_value[0],
+                                           time_value[1], time_value[2])
                 row.append(value)
-                self.log.debug("field=%d, datatype=TIME, value=%s", cur_field+1, value)
-                
+                self.log.debug("field=%d, datatype=TIME, "
+                               "value=%s", cur_field + 1, value)
+
             if fldtype == NzTypeInterval:
-                interval_time = int.from_bytes(fieldDataP[:fldlen-4], byteorder='little', signed=True)
-                interval_month = int.from_bytes(fieldDataP[fldlen-4:fldlen], byteorder='little', signed=True)
-                value = IntervalToText(interval_time,interval_month)
+                interval_time = int.from_bytes(fieldDataP[:fldlen - 4],
+                                               byteorder='little', signed=True)
+                interval_month = int.from_bytes(fieldDataP[fldlen - 4:fldlen],
+                                                byteorder='little',
+                                                signed=True)
+                value = IntervalToText(interval_time, interval_month)
                 row.append(value)
-                self.log.debug("field=%d, datatype=INTERVAL, value=%s", cur_field+1, value)
-                
+                self.log.debug("field=%d, datatype=INTERVAL, "
+                               "value=%s", cur_field + 1, value)
+
             if fldtype == NzTypeTimeTz:
-                timetz_time = int.from_bytes(fieldDataP[:fldlen-4], byteorder='little', signed=True)                
-                timetz_zone = int.from_bytes(fieldDataP[fldlen-4:fldlen], byteorder='little', signed=True)                
+                timetz_time = int.from_bytes(fieldDataP[:fldlen - 4],
+                                             byteorder='little', signed=True)
+                timetz_zone = int.from_bytes(fieldDataP[fldlen - 4:fldlen],
+                                             byteorder='little', signed=True)
                 value = timetz_out_timetzadt(timetz_time, timetz_zone)
                 row.append(value)
-                self.log.debug("field=%d, datatype=TIMETZ, value=%s", cur_field+1, value)
-                
+                self.log.debug("field=%d, datatype=TIMETZ,"
+                               "value=%s", cur_field + 1, value)
+
             if fldtype == NzTypeTimestamp:
-                if fldlen == 8 :
-                    workspace = int.from_bytes(fieldDataP[:fldlen], byteorder='little', signed=True)
+                if fldlen == 8:
+                    workspace = int.from_bytes(fieldDataP[:fldlen],
+                                               byteorder='little', signed=True)
                 elif fldlen == 4:
-                    workspace = int.from_bytes(fieldDataP[:fldlen], byteorder='little', signed=True)
-                
-                if fldlen == 8 :
+                    workspace = int.from_bytes(fieldDataP[:fldlen],
+                                               byteorder='little', signed=True)
+
+                if fldlen == 8:
                     timestamp_value = timestamp2struct(workspace)
-                elif fldlen == 4 :
-					#could not find any case for the same and hence not implemented yet
-					#abstime2struct(workspace, &timestamp_value)
+                elif fldlen == 4:
+                    #  could not find any case for the same and
+                    #  hence not implemented yet
+                    #  abstime2struct(workspace, &timestamp_value)
                     pass
-                
-                time_format = "{0:02d}-{1:02d}-{2:02d} {3:02d}:{4:02d}:{5:02d}.{6:06d}"
-                value = time_format.format(timestamp_value[0],timestamp_value[1],timestamp_value[2],timestamp_value[3],timestamp_value[4],timestamp_value[5],timestamp_value[6])
+
+                time_format = "{0:02d}-{1:02d}-{2:02d} {3:02d}:" \
+                              "{4:02d}:{5:02d}.{6:06d}"
+                value = time_format.format(timestamp_value[0],
+                                           timestamp_value[1],
+                                           timestamp_value[2],
+                                           timestamp_value[3],
+                                           timestamp_value[4],
+                                           timestamp_value[5],
+                                           timestamp_value[6])
                 row.append(value)
-                self.log.debug("field=%d, datatype=TIMESTAMP, value=%s", cur_field+1, value)            
-            
+                self.log.debug("field=%d, datatype=TIMESTAMP, "
+                               "value=%s", cur_field + 1, value)
+
             if fldtype == NzTypeNumeric:
-                
+
                 prec = self.CTable_i_fieldPrecision(tupdesc, cur_field)
                 scale = self.CTable_i_fieldScale(tupdesc, cur_field)
-                count = self.CTable_i_fieldNumericDigit32Count(tupdesc, cur_field)
-                
-                if prec <= 9 :
+                count = self.CTable_i_fieldNumericDigit32Count(tupdesc,
+                                                               cur_field)
+
+                if prec <= 9:
                     num_parts = 1
-                elif prec <= 18 :
+                elif prec <= 18:
                     num_parts = 2
                 else:
                     num_parts = 4
-                
+
                 dataBuffer = []
 
-                if numeric.NDIGIT_INT64 :
-                    for i in range(num_parts) :
-                        dataBuffer.append(int.from_bytes(fieldDataP[:8], byteorder='little', signed=False))
-                        fieldDataP = fieldDataP[8:]                    
-                else :
-                    for i in range(num_parts) :
-                        dataBuffer.append(int.from_bytes(fieldDataP[:4], byteorder='little', signed=False))
-                        fieldDataP = fieldDataP[4:]              
-          
-                buffer = numeric.PYTHON_numeric_load_var(dataBuffer, prec, scale, count)
+                if numeric.NDIGIT_INT64:
+                    for i in range(num_parts):
+                        dataBuffer.append(int.from_bytes(fieldDataP[:8],
+                                                         byteorder='little',
+                                                         signed=False))
+                        fieldDataP = fieldDataP[8:]
+                else:
+                    for i in range(num_parts):
+                        dataBuffer.append(int.from_bytes(fieldDataP[:4],
+                                                         byteorder='little',
+                                                         signed=False))
+                        fieldDataP = fieldDataP[4:]
+
+                buffer = numeric.PYTHON_numeric_load_var(dataBuffer,
+                                                         prec, scale, count)
                 value = numeric.get_str_from_var(buffer, buffer.rscale)
                 row.append(value)
-                self.log.debug("field=%d, datatype=NUMERIC, value=%s", cur_field+1, value) 
-                
-            if fldtype == NzTypeBool:                
+                self.log.debug("field=%d, datatype=NUMERIC, value="
+                               "%s", cur_field + 1, value)
+
+            if fldtype == NzTypeBool:
                 value = fieldDataP[:fldlen] == b'\x01'
                 row.append(value)
-                self.log.debug("field=%d, datatype=BOOL, value=%s", cur_field+1, value)                
-           
+                self.log.debug("field=%d, datatype=BOOL, value="
+                               "%s", cur_field + 1, value)
+
             cur_field += 1
             field_lf += 1
-            
+
         cursor._cached_rows.append(row)
-    
-    def CTable_FieldAt(self, tupdesc, data, cur_field): 
-        if tupdesc.field_fixedSize[cur_field] != 0 :
-            return self.CTable_i_fixedFieldPtr(data, tupdesc.field_offset[cur_field])
-        
-        return self.CTable_i_varFieldPtr(data, tupdesc.fixedFieldsSize, tupdesc.field_offset[cur_field])
+
+    def CTable_FieldAt(self, tupdesc, data, cur_field):
+        if tupdesc.field_fixedSize[cur_field] != 0:
+            return self.CTable_i_fixedFieldPtr(data,
+                                               tupdesc.field_offset[cur_field])
+
+        return self.CTable_i_varFieldPtr(data, tupdesc.fixedFieldsSize,
+                                         tupdesc.field_offset[cur_field])
 
     def CTable_i_fixedFieldPtr(self, data, offset):
         data = data[offset:]
         return data
 
-    def CTable_i_varFieldPtr(self, data, fixedOffset, varDex): 
+    def CTable_i_varFieldPtr(self, data, fixedOffset, varDex):
 
         lenP = data[fixedOffset:]
-        for ctr in range(varDex) :
-            length = int.from_bytes(lenP[0:2], 'little') 
-            if length%2 == 0 :
+        for ctr in range(varDex):
+            length = int.from_bytes(lenP[0:2], 'little')
+            if length % 2 == 0:
                 lenP = lenP[length:]
-            else :
-                lenP = lenP[length+1:]            
-        
-        return lenP        
-    
-    def CTable_i_fieldType(self, tupdesc , coldex) :
+            else:
+                lenP = lenP[length + 1:]
+
+        return lenP
+
+    def CTable_i_fieldType(self, tupdesc, coldex):
         return (tupdesc.field_type[coldex])
 
-    def CTable_i_fieldSize(self, tupdesc , coldex) :
+    def CTable_i_fieldSize(self, tupdesc, coldex):
         return (tupdesc.field_size[coldex])
 
     def CTable_i_fieldPrecision(self, tupdesc, coldex):
@@ -2183,46 +2304,49 @@ class Connection():
 
     def CTable_i_fieldNumericDigit32Count(self, tupdesc, coldex):
         sizeTNumericDigit = 4
-        return int(tupdesc.field_trueSize[coldex] / sizeTNumericDigit) #sizeof(TNumericDigit)
-    
+        return int(tupdesc.field_trueSize[coldex] / sizeTNumericDigit)
+        #  sizeof(TNumericDigit)
+
     def receiveAndWriteDatatoExternal(self, fname, fh):
-        
+
         self._read(4)
-    
-        while(1) :
-		
+
+        while (1):
+
             #  Get EXTAB_SOCK Status
-            try: 
+            try:
                 status = i_unpack(self._read(4))[0]
-            except:
-                self.log.warning("Error while retrieving status, closing unload file")
+            except Exception:
+                self.log.warning("Error while retrieving status, "
+                                 "closing unload file")
             finally:
-                fh.close()     
-		
+                fh.close()
+
             if status == EXTAB_SOCK_DATA:
                 # get number of bytes in block
                 numBytes = i_unpack(self._read(4))[0]
-                try:                    
-                    blockBuffer = str(self._read(numBytes),self._client_encoding) 
+                try:
+                    blockBuffer = str(self._read(numBytes),
+                                      self._client_encoding)
                     fh = open(fname, "w+")
                     fh.write(blockBuffer)
                     self.log.info("Successfully written data into file")
-                except: 
+                except Exception:
                     self.log.warning("Error in writing data to file")
                 continue
 
-            if status ==  EXTAB_SOCK_DONE:
+            if status == EXTAB_SOCK_DONE:
                 fh.close()
                 self.log.info("unload - done receiving data")
                 break
 
             if status == EXTAB_SOCK_ERROR:
-    
-                len = h_unpack(self._read(2))[0]
-                errorMsg = str(self._read(len),self._client_encoding)
 
                 len = h_unpack(self._read(2))[0]
-                errorObject = str(self._read(len),self._client_encoding)
+                errorMsg = str(self._read(len), self._client_encoding)
+
+                len = h_unpack(self._read(2))[0]
+                errorObject = str(self._read(len), self._client_encoding)
 
                 self.log.warning("unload - ErrorMsg: %s", errorMsg)
                 self.log.warning("unload - ErrorObj: %s", errorObject)
@@ -2234,116 +2358,126 @@ class Connection():
             else:
                 fh.close()
                 return
-		
-        return 	
-    
+
+        return
+
     def xferTable(self):
 
         self._read(4)
         clientversion = 1
-        
+
         char = c_unpack(self._read(1))[0]
         filenameBuf = bytearray(char)
-        while True :            
+        while True:
             char = c_unpack(self._read(1))[0]
             if char == b'\x00':
                 break
             filenameBuf.extend(char)
-        
-        filename = str(filenameBuf,self._client_encoding)
-        
+
+        filename = str(filenameBuf, self._client_encoding)
+
         hostversion = i_unpack(self._read(4))[0]
-        
-        val = bytearray( i_pack(clientversion))
+
+        val = bytearray(i_pack(clientversion))
         self._write(val)
         self._flush()
 
         format = i_unpack(self._read(4))[0]
         blockSize = i_unpack(self._read(4))[0]
-        byteread = blockSize
-        self.log.info("Format=%d Block size=%d Host version=%d ", format, blockSize, hostversion)
+        self.log.info("Format=%d Block size=%d "
+                      "Host version=%d ", format,
+                      blockSize, hostversion)
 
-        try: 
-            filehandle = open(filename,'r')
-            self.log.info("Successfully opened External file to read:%s", filename)            
-            while True :                
+        try:
+            filehandle = open(filename, 'r')
+            self.log.info("Successfully opened External"
+                          " file to read:%s", filename)
+            while True:
                 data = filehandle.read(blockSize)
                 if not data:
                     break
                 if blockSize < len(data.encode('utf8')):
                     diff = len(data.encode('utf8')) - blockSize
-                    val = bytearray(i_pack(EXTAB_SOCK_DATA)+ i_pack(blockSize))
+                    val = bytearray(i_pack(EXTAB_SOCK_DATA) +
+                                    i_pack(blockSize))
                     val.extend(data.encode('utf8'))
-                    self._write(val[:blockSize+8])
+                    self._write(val[:blockSize + 8])
                     self._flush()
-                    val = bytearray(i_pack(EXTAB_SOCK_DATA)+ i_pack(diff)+ val[blockSize+8:])                    
+                    val = bytearray(i_pack(EXTAB_SOCK_DATA) +
+                                    i_pack(diff) +
+                                    val[blockSize + 8:])
                     self._write(val)
                     self._flush()
                 else:
-                    val = bytearray(i_pack(EXTAB_SOCK_DATA)+ i_pack(len(data.encode('utf8'))))
+                    val = bytearray(i_pack(EXTAB_SOCK_DATA) +
+                                    i_pack(len(data.encode('utf8'))))
                     val.extend(data.encode('utf8'))
                     self._write(val)
                     self._flush()
-                self.log.debug("No. of bytes sent to BE:%s", len(data))                
-            val = bytearray(i_pack(EXTAB_SOCK_DONE))  
+                self.log.debug("No. of bytes sent to BE:%s", len(data))
+            val = bytearray(i_pack(EXTAB_SOCK_DONE))
             self._write(val)
-            self._flush() 
+            self._flush()
             self.log.info("sent EXTAB_SOCK_DONE to reader")
-                
-        except:
+
+        except Exception:
             self.log.warning("Error opening file")
-	
- #################################################################################
- # Function: getFileFromBE - This Routine opens a file in the temp directory
- #           using the filename specified by the BE in /tmp or c:\.
- #           The data sent by the BE are then written into this file.
- #
- # Parameters:
- #
- #  In       logDir - directory to put the file
- #           filename - name of file to write.
- #           logType - not used at this implementation.
- #
- #  Out      boolean - success or failure.
- #
- #################################################################################
+
+    ##################################################################
+    #  Function: getFileFromBE - This Routine opens a file in
+    #           the temp directory
+    #           using the filename specified by the BE in /tmp
+    #           or c:\.
+    #           The data sent by the BE are then written into
+    #           this file.
+    #
+    #  Parameters:
+    #
+    #   In       logDir - directory to put the file
+    #           filename - name of file to write.
+    #           logType - not used at this implementation.
+    #
+    #   Out      boolean - success or failure.
+    #
+    #################################################################
     def getFileFromBE(self, logDir, filename, logType):
-        
+
         status = True
-        
-        #If no explicit -logDir mentioned (defaulted by backend to /tmp)
+
+        # If no explicit -logDir mentioned (defaulted by backend to /tmp)
         fullpath = path.join(logDir, filename)
-    
-        if logType == 1 :
+
+        if logType == 1:
             fullpath = fullpath + ".nzlog"
             fh = open(fullpath, "w+")
-        elif logType == 2 :
+        elif logType == 2:
             fullpath = fullpath + ".nzbad"
             fh = open(fullpath, "w+")
-        elif logType == 3 :
+        elif logType == 3:
             fullpath = fullpath + ".nzstats"
             fh = open(fullpath, "w+")
-        
-        while(1):
+
+        while (1):
 
             numBytes = i_unpack(self._read(4))[0]
 
-            if numBytes == 0 : #zeros means EOF, no more data
-                break           
+            if numBytes == 0:  # zeros means EOF, no more data
+                break
 
-            dataBuffer = str(self._read(numBytes),self._client_encoding) 
+            dataBuffer = str(self._read(numBytes), self._client_encoding)
 
-            if status :
+            if status:
                 try:
                     fh.write(dataBuffer)
-                    self.log.info("Successfully written data into file: %s", fullpath)	                    
-                except: 
+                    self.log.info("Successfully written data "
+                                  "into file: %s", fullpath)
+                except Exception:
                     self.log.warning("Error in writing data to file")
                     status = False
 
-        fh.close()	
+        fh.close()
         return status
-        
+
     def _send_message(self, code, data):
         try:
             self._write(code)
@@ -2370,7 +2504,7 @@ class Connection():
 
     def handle_NO_DATA(self, msg, ps):
         pass
-        
+
     def handle_COMMAND_COMPLETE(self, data, cursor):
         values = data[:-1].split(b' ')
         command = values[0]
@@ -2389,33 +2523,34 @@ class Connection():
                     pcache['ps'].clear()
 
     def handle_DATA_ROW(self, data, cursor):
-        
-        # bitmaplen denotes the number of bytes bitmap sent by backend. For e.g.: for select 
-        # statement with 9 columns, we would receive 2 bytes bitmap.
-        numberofcol = len(cursor.ps['row_desc']) 
-        bitmaplen = numberofcol // 8                
-        if (numberofcol % 8) > 0 :
-            bitmaplen+=1        
-            
-        # convert hex to dec 
+
+        #  bitmaplen denotes the number of bytes bitmap sent by backend.
+        #  For e.g.: for select
+        #  statement with 9 columns, we would receive 2 bytes bitmap.
+        numberofcol = len(cursor.ps['row_desc'])
+        bitmaplen = numberofcol // 8
+        if (numberofcol % 8) > 0:
+            bitmaplen += 1
+
+        #  convert hex to dec
         hex = data[0:bitmaplen].hex()
         dec = int(hex, 16)
-        
+
         # convert dec to binary
-        bitmap = decimalToBinary(dec,bitmaplen*8)
+        bitmap = decimalToBinary(dec, bitmaplen * 8)
         bitmap.reverse()
-        
+
         data_idx = bitmaplen
         row = []
         for i, func in enumerate(cursor.ps['input_funcs']):
-            if  bitmap[i] == 0:
-                row.append(None)            
+            if bitmap[i] == 0:
+                row.append(None)
             else:
                 vlen = i_unpack(data, data_idx)[0]
                 data_idx += 4
-                row.append(func(data, data_idx, vlen-4))
-                data_idx += vlen-4
-            
+                row.append(func(data, data_idx, vlen - 4))
+                data_idx += vlen - 4
+
         cursor._cached_rows.append(row)
 
     def handle_messages(self, cursor):
@@ -2581,15 +2716,15 @@ class Connection():
 
         return (array_oid, fc, send_array)
 
+
 # pg element oid -> pg array typeoid
 pg_array_types = {
     16: 1000,
-    25: 1009,    # TEXT[]
+    25: 1009,  # TEXT[]
     701: 1022,
     1043: 1009,
     1700: 1231,  # NUMERIC[]
 }
-
 
 # PostgreSQL encodings:
 #   http://www.postgresql.org/docs/8.3/interactive/multibyte.html
@@ -2711,346 +2846,351 @@ def array_dim_lengths(arr):
             retval.extend(array_dim_lengths(v0))
     return retval
 
-def decimalToBinary( dec, bitmaplen):
+
+def decimalToBinary(dec, bitmaplen):
     """This function converts decimal number
     to binary and prints it"""
     bin = []
-    while bitmaplen != 0 :
+    while bitmaplen != 0:
         remainder = dec % 2
         dec = dec // 2
         bin.append(remainder)
         bitmaplen -= 1
-    
+
     return bin
 
-def date2j(y, m, d):
 
-	m12 = int((m - 14) / 12)
-	return ((1461*(y+4800+m12))//4 + (367*(m-2-12*(m12)))//12 - (3*((y+4900+m12)//100))//4 + d - 32075)
- 
+def date2j(y, m, d):
+    m12 = int((m - 14) / 12)
+    return ((1461 * (y + 4800 + m12)) // 4 + (367 * (m - 2 - 12 * m12))
+            // 12 - (3 * ((y + 4900 + m12) // 100)) // 4 + d - 32075)
+
 
 def j2date(jd):
-
     date = []
-    l = jd + 68569
-    n = (4 * l) // 146097
-    l -= (146097*n + 3) // 4
-    i = (4000 * (l + 1)) // 1461001
-    l += 31 - (1461*i)//4
-    j = (80 * l) // 2447
-    d = l - (2447*j)//80
-    l = j // 11
-    m = (j + 2) - (12 * l)
-    y = 100*(n-49) + i + l
-	
-    date.append(y)
-    date.append(m)
-    date.append(d)
-	
+    lval = jd + 68569
+    nval = (4 * lval) // 146097
+    lval -= (146097 * nval + 3) // 4
+    ival = (4000 * (lval + 1)) // 1461001
+    lval += 31 - (1461 * ival) // 4
+    jval = (80 * lval) // 2447
+    day = lval - (2447 * jval) // 80
+    lval = jval // 11
+    month = (jval + 2) - (12 * lval)
+    year = 100 * (nval - 49) + ival + lval
+
+    date.append(year)
+    date.append(month)
+    date.append(day)
+
     return date
 
+
 def time2struct(time):
-    
     time_value = []
-    time = int(time / 1000000) # NZ microsecs
-    
+    time = int(time / 1000000)
+    #  NZ microsecs
+
     hour = int(time / 3600)
     time = time % 3600
     minute = int(time / 60)
     second = int(time % 60)
-    
+
     time_value.append(hour)
     time_value.append(minute)
     time_value.append(second)
-    
+
     return time_value
 
-def IntervalToText(interval_time, interval_month):
 
+def IntervalToText(interval_time, interval_month):
     fsec = 0
-    
+
     tm, fsec = interval2tm(interval_time, interval_month, fsec)
-    
+
     fsec = fsec / 1000000
-    
+
     return EncodeTimeSpan(tm, fsec)
-    
+
+
 def interval2tm(interval_time, interval_month, fsec):
-    
     tmpVal = 0
     time = []
-    
-    if interval_month != 0 :
+
+    if interval_month != 0:
         year = int(interval_month / 12)
         mon = interval_month % 12
-    else :
+    else:
         year = 0
         mon = 0
-        
+
     tmpVal = interval_time // 86400000000
-    
-    if tmpVal != 0 :
+
+    if tmpVal != 0:
         interval_time -= tmpVal * 86400000000
         mday = tmpVal
-    else :
+    else:
         mday = 0
 
     tmpVal = interval_time // 3600000000
-    
-    if tmpVal != 0 :
+
+    if tmpVal != 0:
         interval_time -= tmpVal * 3600000000
         hour = tmpVal
-    else :
+    else:
         hour = 0
-        
+
     tmpVal = interval_time // 60000000
-    
-    if tmpVal != 0 :
+
+    if tmpVal != 0:
         interval_time -= tmpVal * 60000000
         min = tmpVal
-    else :
+    else:
         min = 0
-        
+
     tmpVal = interval_time // 1000000
-    
-    if tmpVal != 0 :
+
+    if tmpVal != 0:
         interval_time -= tmpVal * 1000000
         sec = tmpVal
-    else :
+    else:
         sec = 0
-    
+
     time.append(year)
     time.append(mon)
     time.append(mday)
     time.append(hour)
     time.append(min)
     time.append(sec)
-    
-    fsec = interval_time
-    
-    return time, fsec
- 
-def EncodeTimeSpan(tm, fsec):
 
-	# The sign of year and month are guaranteed to match,
-	# since they are stored internally as "month".
-	# But we'll need to check for is_before and is_nonzero
-	# when determining the signs of hour/minute/seconds fields.
-	#
+    fsec = interval_time
+
+    return time, fsec
+
+
+def EncodeTimeSpan(tm, fsec):
+    # The sign of year and month are guaranteed to match,
+    # since they are stored internally as "month".
+    # But we'll need to check for is_before and is_nonzero
+    # when determining the signs of hour/minute/seconds fields.
+    #
     is_nonzero = is_before = minus = False
     str = ""
 
     if tm[0] != 0:
         str = "{} year"
         str = str.format(tm[0])
-        if abs(tm[0]) != 1 :
+        if abs(tm[0]) != 1:
             str = str + "s"
         else:
             str = str + ""
-            
+
         if tm[0] < 0:
             is_before = True
-        
-        is_nonzero = True
-        
-    if tm[1] != 0 :
-    
-        if is_nonzero == True :
-            str = str + " "
-        else:
-            str = str + ""
-        
-        if is_before == True and tm[1] > 0 :
-            str = str + "+"
-        else:
-            str = str + ""
-            
-        str_mon = "{} mon"
-        str_mon = str_mon.format(tm[1])
-        
-        if abs(tm[1]) != 1 :
-            str_mon = str_mon + "s"
-        else :
-            str_mon = str_mon + ""
-        
-        str = str + str_mon
-		
-        if tm[1] < 0:
-            is_before = True
-        
-        is_nonzero = True
-        
-    if tm[2] != 0 :
-    
-        if is_nonzero == True:
-            str = str + " "
-        else :
-            str = str + ""
-            
-        if is_before == True and tm[2] > 0 :
-            str = str + "+"
-        else :
-            str = str + ""
-        
-        str_day = "{} day"
-        str_day = str_day.format(tm[2])
-        
-        if abs(tm[2]) != 1 :
-            str_day = str_day + "s"
-        else :
-            str_day = str_day + ""
-            
-        str = str + str_day
-        
-        if tm[2] < 0:
-            is_before = True
-            
-        is_nonzero = True
-        
-    if (is_nonzero == False) or (tm[3] != 0) or (tm[4] != 0) or (tm[5] != 0) or (fsec != 0) :
-    
-        if ((tm[3] < 0) or (tm[4] < 0) or (tm[5] < 0) or (fsec < 0)):
-            minus = True
-            
-        if is_nonzero == True :
-            str = str + " "
-        else :
-            str = str + ""
-            
-        if minus == True :
-            str = str + "-"
-        else :
-            if is_before == True :
-                str = str + "+"
-            else :
-                str = str + ""
-                
-        str_hr_min = "{0:02d}:{1:02d}"
-        str = str + str_hr_min.format(abs(tm[3]),abs(tm[4]))
-        
+
         is_nonzero = True
 
-		# fractional seconds?
-        
-        if fsec != 0 :
+    if tm[1] != 0:
+
+        if is_nonzero:
+            str = str + " "
+        else:
+            str = str + ""
+
+        if is_before and tm[1] > 0:
+            str = str + "+"
+        else:
+            str = str + ""
+
+        str_mon = "{} mon"
+        str_mon = str_mon.format(tm[1])
+
+        if abs(tm[1]) != 1:
+            str_mon = str_mon + "s"
+        else:
+            str_mon = str_mon + ""
+
+        str = str + str_mon
+
+        if tm[1] < 0:
+            is_before = True
+
+        is_nonzero = True
+
+    if tm[2] != 0:
+
+        if is_nonzero:
+            str = str + " "
+        else:
+            str = str + ""
+
+        if is_before and tm[2] > 0:
+            str = str + "+"
+        else:
+            str = str + ""
+
+        str_day = "{} day"
+        str_day = str_day.format(tm[2])
+
+        if abs(tm[2]) != 1:
+            str_day = str_day + "s"
+        else:
+            str_day = str_day + ""
+
+        str = str + str_day
+
+        if tm[2] < 0:
+            is_before = True
+
+        is_nonzero = True
+
+    if (not is_nonzero) or (tm[3] != 0) or \
+            (tm[4] != 0) or (tm[5] != 0) or (fsec != 0):
+
+        if tm[3] < 0 or tm[4] < 0 or tm[5] < 0 or fsec < 0:
+            minus = True
+
+        if is_nonzero:
+            str = str + " "
+        else:
+            str = str + ""
+
+        if minus:
+            str = str + "-"
+        else:
+            if is_before:
+                str = str + "+"
+            else:
+                str = str + ""
+
+        str_hr_min = "{0:02d}:{1:02d}"
+        str = str + str_hr_min.format(abs(tm[3]), abs(tm[4]))
+
+        is_nonzero = True
+
+        # fractional seconds?
+
+        if fsec != 0:
             fsec += tm[5]
             str_hr_sec = ":{0:09.6f}"
             str = str + str_hr_sec.format(abs(fsec))
             is_nonzero = True
-        # otherwise, integer seconds only? 
-        elif tm[5] != 0 :
+        # otherwise, integer seconds only?
+        elif tm[5] != 0:
             str_hr_sec = ":{0:02d}"
             str = str + str_hr_sec.format(abs(tm[5]))
             is_nonzero = True
 
-	# identically zero? then put in a unitless zero... 
-    if is_nonzero == False :
+    # identically zero? then put in a unitless zero...
+    if not is_nonzero:
         str = str + "0"
-        
+
     return str
 
-def abs(n) :
+
+def abs(n):
     if n < 0:
         return -n
     else:
         return n
-	 
-def timetz_out_timetzadt(timetz_time, timetz_zone):
 
+
+def timetz_out_timetzadt(timetz_time, timetz_zone):
     tm = []
-    
-    time = int(timetz_time / 1000000) 
+
+    time = int(timetz_time / 1000000)
     fusec = timetz_time % 1000000
-    
+
     hour = int(time / 3600)
     time = time % 3600
     min = int(time / 60)
     sec = time % 60
-    
+
     tm.append(hour)
     tm.append(min)
     tm.append(sec)
-    
+
     return EncodeTimeOnly(tm, fusec, timetz_zone)
+
 
 # EncodeTimeOnly()
 # Encode time fields only.
- 
-def EncodeTimeOnly(tm, fusec, timetz_zone) :
 
+def EncodeTimeOnly(tm, fusec, timetz_zone):
     if (tm[0] < 0) or (tm[0] > 24):
         return ""
-    
+
     if (tm[1] < 0) or (tm[1] > 59):
         return ""
-    
-    fusec = fusec/1000000
-    
+
+    fusec = fusec / 1000000
+
     str = "{0:02d}:{1:02d}"
     str = str.format(tm[0], tm[1])
-    	
-    # fractional seconds? 
-    if fusec != 0 :
+
+    # fractional seconds?
+    if fusec != 0:
         fusec += tm[2]
         str_sec = ":{0:09.6f}"
         str = str + str_sec.format(fusec)
-    elif tm[2] != 0 :
+    elif tm[2] != 0:
         str_sec = ":{0:02d}"
         str = str + str_sec.format(tm[2])
-        
-    if timetz_zone != 0 :
-    
+
+    if timetz_zone != 0:
+
         hour = -int(timetz_zone / 3600)
         temp = int(timetz_zone / 60)
-        
-        if temp < 0 :
+
+        if temp < 0:
             temp = -temp
-            
+
         min = int(temp % 60)
-        
-        if (hour == 0) and (timetz_zone > 0) :
+
+        if (hour == 0) and (timetz_zone > 0):
             str_tz = "-00:{0:02d}"
             str = str + str_tz.format(min)
         else:
-            if min != 0 :
+            if min != 0:
                 str_tz = "+{0:02d}:{1:02d}"
                 str = str + str_tz.format(hour, min)
-            else :
+            else:
                 str_tz = "+{0:02d}"
                 str = str + str_tz.format(hour)
-    
+
     return str
 
 
 def timestamp2struct(dt):
-
     ts = []
     date = int(dt // 86400000000)
     date0 = date2j(2000, 1, 1)
-    
+
     time = dt % 86400000000
-    
-    if time < 0 :
-        time += 86400000000 # NZ - was 86400 w/o exp
-        date -= 1	
 
-	# Julian day routine does not work for negative Julian days 
-    if date < -date0 :
-        return False	
+    if time < 0:
+        time += 86400000000
+        #  NZ - was 86400 w/o exp
+        date -= 1
 
-	# add offset to go from J2000 back to standard Julian date
+    #  Julian day routine does not work for negative Julian days
+    if date < -date0:
+        return False
+
+    #  add offset to go from J2000 back to standard Julian date
     date += date0
-    
+
     ts = j2date(date)
-    
-    fraction = (time % 1000000) # NZ microsecs
-	
-	#Netezza stores the fraction field of TIMESTAMP_STRUCT to
-	#microsecond precision. The fraction field of a must be in
-	#billionths, per ODBC spec. Therefore, multiply by 1000.
-    
-    time = int(time/1000000) # NZ microsecs
-    
+
+    fraction = (time % 1000000)  # NZ microsecs
+
+    #  Netezza stores the fraction field of TIMESTAMP_STRUCT to
+    #  microsecond precision. The fraction field of a must be in
+    #  billionths, per ODBC spec. Therefore, multiply by 1000.
+
+    time = int(time / 1000000)
+    #  NZ microsecs
+
     hour = int(time / 3600)
     time -= (hour * 3600)
     minute = int(time / 60)
@@ -3060,5 +3200,5 @@ def timestamp2struct(dt):
     ts.append(minute)
     ts.append(second)
     ts.append(fraction)
-    
+
     return ts
