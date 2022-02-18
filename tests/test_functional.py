@@ -1,5 +1,6 @@
-import unittest
 import subprocess
+import unittest
+
 import nzpy
 
 

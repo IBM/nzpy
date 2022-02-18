@@ -1,7 +1,10 @@
-import pytest
 import time
 import warnings
+
 import nzpy
+
+import pytest
+
 ''' Python DB API 2.0 driver compliance unit test suite.
     This software is Public Domain and may be used without restrictions.
  "Now we have booze and barflies entering the discussion, plus rumours of

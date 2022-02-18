@@ -1,7 +1,9 @@
+import datetime
 import os
 import time
+
 import nzpy
-import datetime
+
 import pytest
 
 

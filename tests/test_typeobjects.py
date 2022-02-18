@@ -1,4 +1,5 @@
 import unittest
+
 from nzpy import Interval
 
 

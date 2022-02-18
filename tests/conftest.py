@@ -1,7 +1,9 @@
-import nzpy
-import pytest
-import sys
 import subprocess
+import sys
+
+import nzpy
+
+import pytest
 
 
 @pytest.fixture(scope="class")

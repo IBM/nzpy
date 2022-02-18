@@ -1,15 +1,16 @@
-import nzpy
-from datetime import (datetime as Datetime,
-                      time as Time, date as Date,
-                      timedelta as Timedelta)
 import decimal
-import struct
-import uuid
-import os
-import time
-import json
-import pytest
 import ipaddress
+import json
+import os
+import struct
+import time
+import uuid
+from datetime import (date as Date, datetime as Datetime,
+                      time as Time, timedelta as Timedelta)
+
+import nzpy
+
+import pytest
 
 # Type conversion tests
 
@@ -451,7 +452,6 @@ def test_timestamp_tz_roundtrip(is_java, cursor):
         v2 = retval[0][0]
         assert v2.tzinfo is not None
         assert v1 == v2
-
 def test_timestamp_mismatch(is_java, cursor):
     if not is_java:
         mst = pytz.timezone("America/Edmonton")
@@ -506,7 +506,6 @@ def test_binary_output_methods(con):
             cursor.execute("SELECT ?(%?) as f1" % method_out, (value,))
             retval = cursor.fetchall()
             assert retval[0][0] == con.make_params((value,))[0][2](value)
-
 def test_int4_array_out(cursor):
     cursor.execute(
         "SELECT '{1,2,3,4}'::INT[] AS f1, '{{1,2,3},{4,5,6}}'::INT[][] AS f2, "

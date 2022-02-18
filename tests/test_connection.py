@@ -1,5 +1,7 @@
-import nzpy
 import sys
+
+import nzpy
+
 import pytest
 
 # Check if running in Jython
@@ -107,9 +109,9 @@ def testBytesPassword(con, db_kwargs):
         cur.execute("drop user " + username)
         con.commit()
 
+
 # This requires a line in pg_hba.conf that requires scram-sha-256 for the
 # database scram-sha-256
-
 
 def test_scram_sha_256(db_kwargs):
     db_kwargs["database"] = "nzpy_scram_sha_256"

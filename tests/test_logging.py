@@ -1,8 +1,10 @@
-import logging
-import nzpy
-import pathlib
-import pytest
 import io
+import logging
+import pathlib
+
+import nzpy
+
+import pytest
 
 
 @pytest.fixture
