@@ -9,8 +9,6 @@ from socket import gethostname
 from sys import argv
 
 from nzpy import core
-from nzpy.core import InterfaceError
-
 
 #  CP Version
 CP_VERSION_1 = 1
@@ -304,7 +302,7 @@ class Handshake():
                         information = HSV2_SSL_CONNECT
 
                     except ImportError:
-                        raise InterfaceError("SSL required but ssl "
+                        raise core.InterfaceError("SSL required but ssl "
                                              "module not available in this "
                                              "python installation")
 
@@ -537,7 +535,7 @@ class Handshake():
             salt = _read(2)
             self.log.debug("Salt =%s", salt)
             if password is None:
-                raise InterfaceError(
+                raise core.InterfaceError(
                     "server requesting MD5 password authentication, "
                     "but no password was provided")
             md5encoded = md5(salt+password)
@@ -556,7 +554,7 @@ class Handshake():
             salt = _read(2)
             self.log.debug("Salt =%s", salt)
             if password is None:
-                raise InterfaceError("server requesting MD5 password "
+                raise core.InterfaceError("server requesting MD5 password "
                                      "authentication, but no password "
                                      "was provided")
             sha256encoded = sha256(salt+password)
