@@ -18,7 +18,8 @@ def test_qmark():
 def test_qmark_2():
     new_query, make_args = convert(
         "qmark", "SELECT ?, ?, * FROM t WHERE a=? AND b='are you ''sure?'")
-    expected = "SELECT NULL, NULL, * FROM t WHERE a=NULL AND b='are you ''sure?'"
+    expected = "SELECT NULL, NULL, * FROM t WHERE a=NULL AND " \
+               "b='are you ''sure?'"
     assert new_query == expected
     assert make_args((1, 2, 3)) == (1, 2, 3)
 
@@ -60,7 +61,6 @@ def test_format_multiline():
 
 
 '''
-
 def test_named():
     new_query, make_args = convert(
         "named",
@@ -68,8 +68,6 @@ def test_named():
     expected = "SELECT sum(x)::decimal(5, 2) $1, $2 FROM t WHERE a=$1"
     assert new_query == expected
     assert make_args({"f_2": 1, "f1": 2}) == (1, 2)
-
-
 def test_py_format():
     new_query, make_args = convert(
         "pyformat", "SELECT %(f2)s, %(f1)s, \"f1_%%\", E'txt_%%' "
@@ -78,7 +76,6 @@ def test_py_format():
         "b='75%%'"
     assert new_query == expected
     assert make_args({"f2": 1, "f1": 2, "f3": 3}) == (1, 2)
-
     # pyformat should support %s and an array, too:
     new_query, make_args = convert(
         "pyformat", "SELECT %s, %s, \"f1_%%\", E'txt_%%' "
@@ -87,5 +84,4 @@ def test_py_format():
         "b='75%%'"
     assert new_query, expected
     assert make_args((1, 2, 3)) == (1, 2, 3)
-
 '''

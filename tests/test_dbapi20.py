@@ -1,16 +1,16 @@
-import pytest
 import time
 import warnings
+
 import nzpy
+
+import pytest
+
 ''' Python DB API 2.0 driver compliance unit test suite.
-
     This software is Public Domain and may be used without restrictions.
-
  "Now we have booze and barflies entering the discussion, plus rumours of
   DBAs on drugs... and I won't tell you what flashes through my mind each
   time I read the subject line with 'Anal Compliance' in it.  All around
   this is turning out to be a thoroughly unwholesome unit test."
-
     -- Ian Bicking
 '''
 
@@ -69,26 +69,22 @@ __author__ = 'Stuart Bishop <zen@shangri-la.dropbear.id.au>'
     test case to ensure compiliance with the DB-API. It is
     expected that this TestCase may be expanded in the future
     if ambiguities or edge conditions are discovered.
-
     The 'Optional Extensions' are not yet being tested.
-
     self.drivers should subclass this test, overriding setUp, tearDown,
     self.driver, connect_args and connect_kw_args. Class specification
     should be as follows:
-
     import dbapi20
     class mytest(dbapi20.DatabaseAPI20Test):
        [...]
-
     Don't 'import DatabaseAPI20Test from dbapi20', or you will
     confuse the unit tester - just 'import dbapi20'.
 '''
+
 
 # The self.driver module. This should be the module where the 'connect'
 # method is to be found
 driver = nzpy
 table_prefix = 'dbapi20test_'  # If you need to specify a prefix for tables
-
 ddl1 = 'create table %sbooze (name varchar(20))' % table_prefix
 ddl2 = 'create table %sbarflys (name varchar(20))' % table_prefix
 xddl1 = 'drop table %sbooze' % table_prefix
@@ -352,6 +348,7 @@ def _paraminsert(cur):
         'incorrectly'
     cur.execute(xddl1)
 
+
 def test_executemany(cursor):
     executeDDL1(cursor)
     largs = [("Coopers",), ("Boags",)]
@@ -387,12 +384,12 @@ def test_executemany(cursor):
     assert beers[1] == "Coopers", 'incorrect data retrieved'
     cursor.execute(xddl1)
 
+
 def test_fetchone(cursor):
     # cursor.fetchone should raise an Error if called before
     # executing a select-type query
     with pytest.raises(driver.Error):
         cursor.fetchone()
-
     # cursor.fetchone should raise an Error if called after
     # executing a query that cannnot return rows
     executeDDL1(cursor)
@@ -422,6 +419,7 @@ def test_fetchone(cursor):
     assert cursor.rowcount in (-1, 1)
     cursor.execute(xddl1)
 
+
 samples = [
     'Carlton Cold',
     'Carlton Draft',
@@ -430,6 +428,7 @@ samples = [
     'Victoria Bitter',
     'XXXX'
 ]
+
 
 def _populate():
     ''' Return a list of sql commands to setup the DB for the fetch
@@ -508,6 +507,7 @@ def test_fetchmany(cursor):
     cursor.execute(xddl1)
     cursor.execute(xddl2)
 
+
 def test_fetchall(cursor):
     # cursor.fetchall should raise an Error if called
     # without executing a query that may return rows (such
@@ -550,6 +550,7 @@ def test_fetchall(cursor):
     cursor.execute(xddl1)
     cursor.execute(xddl2)
 
+
 def test_mixedfetch(cursor):
     executeDDL1(cursor)
     for sql in _populate():
@@ -572,6 +573,7 @@ def test_mixedfetch(cursor):
     for i in range(0, len(samples)):
         assert rows[i] == samples[i], 'incorrect data retrieved or inserted'
     cursor.execute(xddl1)
+
 
 def help_nextset_setUp(cur):
     ''' Should create a procedure called deleteme
@@ -610,6 +612,7 @@ def test_nextset(cursor):
         help_nextset_tearDown(cursor)
     cursor.execute(xddl1)
     cursor.execute(xddl2)
+
 
 def test_arraysize(cursor):
     # Not much here - rest of the tests for this are in test_fetchmany

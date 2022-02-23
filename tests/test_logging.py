@@ -1,8 +1,11 @@
-import logging
-import nzpy
-import pathlib
-import pytest
 import io
+import logging
+import pathlib
+
+import nzpy
+
+import pytest
+
 
 @pytest.fixture
 def lf(request):
@@ -15,21 +18,24 @@ def lf(request):
         if f.exists():
             f.unlink()
 
+
 @pytest.fixture
 def db(db_kwargs):
     db_kwargs['database'] = 'system'
     return db_kwargs
 
+
 @pytest.fixture
 def base_log(request):
-    for l in logging.getLogger().handlers.copy():
-        logging.getLogger().removeHandler(l)
+    for log in logging.getLogger().handlers.copy():
+        logging.getLogger().removeHandler(log)
     lbuf = io.StringIO()
 
     s = logging.StreamHandler(lbuf)
     s.setFormatter(logging.Formatter('%(name)s %(message)s'))
     logging.getLogger().addHandler(s)
     return lbuf
+
 
 def test_parent_logging(db, lf, base_log):
     db['logOptions'] = nzpy.LogOptions.Inherit
@@ -39,7 +45,8 @@ def test_parent_logging(db, lf, base_log):
     assert not lf.exists()
     # parent should have its logs
     assert 'nzpy' in base_log.getvalue()
-    
+
+
 def test_parent_logging_negative(db, lf, base_log):
     db['logLevel'] = logging.INFO
 
@@ -53,11 +60,11 @@ def test_parent_logging_negative(db, lf, base_log):
     # parent shouldn't have its logs
     assert 'nzpy' not in base_log.getvalue()
 
+
 def test_parent_logging_disabled(db, lf, base_log):
-    #db['log_option'] = ~(nzpy.LogOptions.Inherit|nzpy.LogOptions.Logfile)
+    # db['log_option'] = ~(nzpy.LogOptions.Inherit|nzpy.LogOptions.Logfile)
     db['logOptions'] = nzpy.LogOptions.Disabled
     db['logLevel'] = logging.INFO
-
     logging.basicConfig()
     logging.error("hello")
     nzpy.connect(**db)
@@ -65,6 +72,7 @@ def test_parent_logging_disabled(db, lf, base_log):
     assert not lf.exists()
     # parent shouldn't have its logs
     assert 'nzpy' not in base_log.getvalue()
+
 
 def test_log_file(db, lf, base_log):
     db['logOptions'] = nzpy.LogOptions.Logfile
@@ -74,5 +82,3 @@ def test_log_file(db, lf, base_log):
     # parent should have its logs
     assert 'nzpy' not in base_log.getvalue()
     nzpy.connect(**db)
-
-
