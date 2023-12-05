@@ -10,13 +10,13 @@ setup(
     version=1.0,
     description="IBM Netezza python driver",
     long_description=open(readme).read(),
-    long_description_content_type='text/markdown',
+    long_description_content_type="text/markdown",
     author="IBM",
     author_email="shabmoh3@in.ibm.com",
     url="https://github.com/ibm/nzpy",
     license="IBM",
-    python_requires='>=3.5',
-    install_requires=['scramp==1.1.0'],
+    python_requires=">=3.5",
+    install_requires=["scramp>=1.1.0, <2.0"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
@@ -38,7 +38,6 @@ setup(
         "Source": "https://github.com/IBM/nzpy",
         "Tracker": "https://github.com/IBM/nzpy/issues",
     },
-
     keywords="Netezza dbapi",
-    packages=("nzpy",)
+    packages=("nzpy",),
 )
