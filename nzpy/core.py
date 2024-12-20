@@ -739,6 +739,7 @@ class Cursor():
         self._row_count = -1
         self._cached_rows = deque()
         self.notices = deque()
+        self.db_response = deque()
 
     def __enter__(self):
         return self
@@ -878,9 +879,12 @@ class Cursor():
             making up a row.
         """
         try:
-            return tuple(self)
+            return list(self) if self.connection.multiple_flag else tuple(self)
         except TypeError:
             raise ProgrammingError("attempting to use unexecuted cursor")
+
+    def fetchresponse(self):
+        return tuple(self.db_response)
 
     def close(self):
         """Closes the cursor.
@@ -926,6 +930,8 @@ class Cursor():
         self._row_count = -1
         self._cached_rows.clear()
         self.notices.clear()
+        self.db_response.clear()
+        self.query_data = []
 
 
 # Message codes
@@ -1148,7 +1154,7 @@ class Connection():
         self.parameter_statuses = deque(maxlen=100)
         self.max_prepared_statements = int(max_prepared_statements)
 
-        self.query_data = []
+        self.query_data = ()
         self.multiple_flag = False
 
         # honor logging.* log level constants if specified
@@ -1814,8 +1820,7 @@ class Connection():
         else:
             query = self.Prepare(cursor, query, vals)
 
-        if len(query.split(';')[:-1])>1:
-            self.multiple_flag = True
+        self.multiple_flag = True if len(query.split(';')[:-1]) > 1 else False
 
         if self.status == CONN_EXECUTING:
             self._read(4)
@@ -1864,10 +1869,20 @@ class Connection():
                 self.handle_COMMAND_COMPLETE(data, cursor)
                 self.log.debug("Response received from "
                                "backend: %s", str(data, self._client_encoding))
+                response_recieved = str(data, self._client_encoding)
+    
+                if response_recieved != "SELECT\x00":
+                    cursor.db_response.append(response_recieved)
+                else:
+                    if self.multiple_flag:
+                        cursor.db_response.append(self.query_data)
+                    else:
+                        cursor.db_response.extend(cursor._cached_rows)
+
                 if self.multiple_flag:
                     if len(self.query_data) != 0:
                         cursor._cached_rows.append(self.query_data)
-                    self.query_data = []
+                    self.query_data = ()
                 continue
             if response == READY_FOR_QUERY:
                 return True
@@ -1898,14 +1913,18 @@ class Connection():
                                                  f in cursor.ps['row_desc'])
             if response == DATA_ROW:
                 length = i_unpack(self._read(4))[0]
+                # print(f"The length : {length}")
                 self.handle_DATA_ROW(self._read(length), cursor)
             if response == b"X":
                 length = i_unpack(self._read(4))[0]
                 self.tupdesc = DbosTupleDesc()
+                # print("The response is X and the length to read is : ",length)
+                # print(f"The entire data to be read is : self._read(length) : {str(self._read(length),'utf8',errors='replace')}")
                 self.Res_get_dbos_column_descriptions(self._read(length),
                                                       self.tupdesc)
                 continue
             if response == b"Y":
+                # print(f"The response recieved is Y and the cached_rows is getting appended")
                 self.Res_read_dbos_tuple(cursor, self.tupdesc)
                 continue
             if response == b"u":
@@ -1978,8 +1997,11 @@ class Connection():
                     notice = notice[len('NOTICE:'):]
                 notice = notice.strip().rstrip('\x00')
                 cursor.notices.append(notice)
+                # print(f"The response is I")
                 self.log.debug("Response received from backend:%s", notice)
                 cursor._cached_rows.append([])
+        
+        # print("{}"*70)
 
     def Res_get_dbos_column_descriptions(self, data, tupdesc):
 
@@ -2273,10 +2295,16 @@ class Connection():
 
             cur_field += 1
             field_lf += 1
+        # print(f"The value that is getting appended inside Res_read_dbos_tuple is : {row}")
+        # cursor._cached_rows.append(row)
         if self.multiple_flag:
-            self.query_data.append(row)
+            # print("The multiple flag is True and appending to query_data")
+            self.query_data += (row,)
+            # self.query_data.append(row)
         else:
+            # print("The multiple flag is False and appending to cached_rows")
             cursor._cached_rows.append(row)
+        
 
     def CTable_FieldAt(self, tupdesc, data, cur_field):
         if tupdesc.field_fixedSize[cur_field] != 0:
@@ -2539,7 +2567,9 @@ class Connection():
         #  bitmaplen denotes the number of bytes bitmap sent by backend.
         #  For e.g.: for select
         #  statement with 9 columns, we would receive 2 bytes bitmap.
+        # print("Handling the data row")
         numberofcol = len(cursor.ps['row_desc'])
+        # print("The number of col : ",numberofcol)
         bitmaplen = numberofcol // 8
         if (numberofcol % 8) > 0:
             bitmaplen += 1
@@ -2554,6 +2584,7 @@ class Connection():
 
         data_idx = bitmaplen
         row = []
+
         for i, func in enumerate(cursor.ps['input_funcs']):
             if bitmap[i] == 0:
                 row.append(None)
@@ -2562,10 +2593,18 @@ class Connection():
                 data_idx += 4
                 row.append(func(data, data_idx, vlen - 4))
                 data_idx += vlen - 4
+        # print(f"The valie of self.query_data : {self.query_data}")
+        # print("The value that is appending is : ",row)
         if self.multiple_flag:
-            self.query_data.append(row)
+            # print("The multiple flag is True and appending to query_data")
+            self.query_data += (row,)
+            # self.query_data.append(row)
         else:
+            # print("The multiple flag is False and appending to cached_rows")
             cursor._cached_rows.append(row)
+        # print(f"The valie of self.query_data after append : {self.query_data}")
+        # print(f"The valie of cursor._cached_rows after append : {cursor._cached_rows}")
+        
 
     def handle_messages(self, cursor):
         code = self.error = None
