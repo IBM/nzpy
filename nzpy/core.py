@@ -1913,18 +1913,14 @@ class Connection():
                                                  f in cursor.ps['row_desc'])
             if response == DATA_ROW:
                 length = i_unpack(self._read(4))[0]
-                # print(f"The length : {length}")
                 self.handle_DATA_ROW(self._read(length), cursor)
             if response == b"X":
                 length = i_unpack(self._read(4))[0]
                 self.tupdesc = DbosTupleDesc()
-                # print("The response is X and the length to read is : ",length)
-                # print(f"The entire data to be read is : self._read(length) : {str(self._read(length),'utf8',errors='replace')}")
                 self.Res_get_dbos_column_descriptions(self._read(length),
                                                       self.tupdesc)
                 continue
             if response == b"Y":
-                # print(f"The response recieved is Y and the cached_rows is getting appended")
                 self.Res_read_dbos_tuple(cursor, self.tupdesc)
                 continue
             if response == b"u":
@@ -1997,11 +1993,8 @@ class Connection():
                     notice = notice[len('NOTICE:'):]
                 notice = notice.strip().rstrip('\x00')
                 cursor.notices.append(notice)
-                # print(f"The response is I")
                 self.log.debug("Response received from backend:%s", notice)
                 cursor._cached_rows.append([])
-        
-        # print("{}"*70)
 
     def Res_get_dbos_column_descriptions(self, data, tupdesc):
 
@@ -2295,14 +2288,9 @@ class Connection():
 
             cur_field += 1
             field_lf += 1
-        # print(f"The value that is getting appended inside Res_read_dbos_tuple is : {row}")
-        # cursor._cached_rows.append(row)
         if self.multiple_flag:
-            # print("The multiple flag is True and appending to query_data")
             self.query_data += (row,)
-            # self.query_data.append(row)
         else:
-            # print("The multiple flag is False and appending to cached_rows")
             cursor._cached_rows.append(row)
         
 
@@ -2567,9 +2555,7 @@ class Connection():
         #  bitmaplen denotes the number of bytes bitmap sent by backend.
         #  For e.g.: for select
         #  statement with 9 columns, we would receive 2 bytes bitmap.
-        # print("Handling the data row")
         numberofcol = len(cursor.ps['row_desc'])
-        # print("The number of col : ",numberofcol)
         bitmaplen = numberofcol // 8
         if (numberofcol % 8) > 0:
             bitmaplen += 1
@@ -2593,17 +2579,10 @@ class Connection():
                 data_idx += 4
                 row.append(func(data, data_idx, vlen - 4))
                 data_idx += vlen - 4
-        # print(f"The valie of self.query_data : {self.query_data}")
-        # print("The value that is appending is : ",row)
         if self.multiple_flag:
-            # print("The multiple flag is True and appending to query_data")
             self.query_data += (row,)
-            # self.query_data.append(row)
         else:
-            # print("The multiple flag is False and appending to cached_rows")
             cursor._cached_rows.append(row)
-        # print(f"The valie of self.query_data after append : {self.query_data}")
-        # print(f"The valie of cursor._cached_rows after append : {cursor._cached_rows}")
         
 
     def handle_messages(self, cursor):
