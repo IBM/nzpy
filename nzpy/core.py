@@ -1090,7 +1090,8 @@ dataType = {
     NzTypeNVarChar: "NzTypeNVarChar",
     NzTypeJson: "NzTypeJson",
     NzTypeJsonb: "NzTypeJsonb",
-    NzTypeJsonpath: "NzTypeJsonpath"
+    NzTypeJsonpath: "NzTypeJsonpath",
+    NzTypeLastEntry: "NzTypeLastEntry"
 
 }
 
@@ -2098,7 +2099,7 @@ class Connection():
             if fldtype == NzTypeVarChar or fldtype == NzTypeVarFixedChar or \
                     fldtype == NzTypeGeometry or fldtype == NzTypeVarBinary \
                     or fldtype == NzTypeJson or fldtype == NzTypeJsonb or \
-                    fldtype == NzTypeJsonpath:
+                    fldtype == NzTypeJsonpath or fldtype == NzTypeLastEntry:
                 cursize = int.from_bytes(fieldDataP[0:2], 'little') - 2
                 value = str(fieldDataP[2:cursize + 2],
                             self._char_varchar_encoding)
