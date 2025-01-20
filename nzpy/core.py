@@ -878,7 +878,7 @@ class Cursor():
             making up a row.
         """
         try:
-            return tuple(self)
+            return list(self) if self.connection.multiple_flag else tuple(self)
         except TypeError:
             raise ProgrammingError("attempting to use unexecuted cursor")
 
@@ -1148,7 +1148,7 @@ class Connection():
         self.parameter_statuses = deque(maxlen=100)
         self.max_prepared_statements = int(max_prepared_statements)
 
-        self.query_data = []
+        self.query_data = ()
         self.multiple_flag = False
 
         # honor logging.* log level constants if specified
@@ -1867,7 +1867,7 @@ class Connection():
                 if self.multiple_flag:
                     if len(self.query_data) != 0:
                         cursor._cached_rows.append(self.query_data)
-                    self.query_data = []
+                    self.query_data = ()
                 continue
             if response == READY_FOR_QUERY:
                 return True
@@ -2274,7 +2274,7 @@ class Connection():
             cur_field += 1
             field_lf += 1
         if self.multiple_flag:
-            self.query_data.append(row)
+            self.query_data += (row,)
         else:
             cursor._cached_rows.append(row)
 
@@ -2563,7 +2563,7 @@ class Connection():
                 row.append(func(data, data_idx, vlen - 4))
                 data_idx += vlen - 4
         if self.multiple_flag:
-            self.query_data.append(row)
+            self.query_data += (row,)
         else:
             cursor._cached_rows.append(row)
 
