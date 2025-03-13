@@ -13,7 +13,7 @@ from datetime import (date, datetime as Datetime,
                       time, timedelta as Timedelta)
 from datetime import timezone as Timezone
 from decimal import Decimal
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 from ipaddress import (IPv4Address, IPv4Network, IPv6Address,
                        IPv6Network, ip_address, ip_network)
 from itertools import count, islice
