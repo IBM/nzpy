@@ -2162,9 +2162,14 @@ class Connection():
                 workspace = int.from_bytes(fieldDataP[:fldlen],
                                            byteorder='little', signed=True)
                 time_value = time2struct(workspace)
-                time_format = "{0:02d}:{1:02d}:{2:02d}"
-                value = time_format.format(time_value[0],
-                                           time_value[1], time_value[2])
+                if time_value[3]:
+                    time_format = "{0:02d}:{1:02d}:{2:02d}.{3:06d}"
+                    value = time_format.format(time_value[0], time_value[1],
+                                               time_value[2], time_value[3])
+                else:
+                    time_format = "{0:02d}:{1:02d}:{2:02d}"
+                    value = time_format.format(time_value[0], time_value[1],
+                                               time_value[2])
                 row.append(value)
                 self.log.debug("field=%d, datatype=TIME, "
                                "value=%s", cur_field + 1, value)
@@ -2888,17 +2893,17 @@ def j2date(jd):
 
 def time2struct(time):
     time_value = []
-    time = int(time / 1000000)
-    #  NZ microsecs
-
-    hour = int(time / 3600)
-    time = time % 3600
-    minute = int(time / 60)
-    second = int(time % 60)
+    us = time % 1000000
+    time = int(time / 1000000) # NZ microsecs
+    second = time % 60
+    time = int(time / 60)
+    minute = time % 60
+    hour = int(time / 60)
 
     time_value.append(hour)
     time_value.append(minute)
     time_value.append(second)
+    time_value.append(us)
 
     return time_value
 
