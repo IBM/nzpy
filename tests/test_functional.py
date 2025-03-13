@@ -399,7 +399,7 @@ class testnzpy(unittest.TestCase):
         self.performOperation("./setup_all_datatype")
         self.cursor.execute("CREATE EXTERNAL TABLE "
                             "all_datatypes_retunload_ext "
-                            "(a_srno integer, a_char5"
+                            "(a_srno integer, a_char5 "
                             "char(5), a_char20 char(20) not NULL, "
                             "a_char1000 char(1000), "
                             "a_varchar1 varchar(1), a_varchar50 varchar(50), "
@@ -1270,7 +1270,7 @@ class testnzpy(unittest.TestCase):
             self.assertEqual('î·®ð£', c5, "ERROR: Data Difference")
             self.assertEqual('ó´<9a><90>ð£¨°ð¥»<85>ô<8a>°¦ð¨<88>¾ó·¿<90>óµ'
                              '¿¡ô<85><8c>«ð<9d'
-                             '><9b>»ô<8c>³<81>ê<8b>ªð <89>¨ô<8b><82><93>ô'
+                             '><9b>»ô<8c>³<81>ê<8b>ªð <89>¨ô<8b><82><93>ô'
                              '<8c>½<9a>æ¢<8b>è°<9c>ô<', c6,
                              "ERROR: Data Difference")
             self.assertEqual('å', c7, "ERROR: Data Difference")
