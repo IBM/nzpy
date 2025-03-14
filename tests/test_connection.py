@@ -53,7 +53,9 @@ def trust_all_certificates(request):
 def testSocketMissing():
     conn_params = {
         'unix_sock': "/file-does-not-exist",
-        'user': "doesn't-matter"}
+        'user': "doesn't-matter",
+        'database': "dummy_db"
+        }
 
     with pytest.raises(nzpy.InterfaceError):
         nzpy.connect(**conn_params)
