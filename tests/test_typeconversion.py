@@ -308,8 +308,8 @@ def test_json_roundtrip(cursor):
     val = {'name': 'Apollo 11 Cave', 'zebra': True, 'age': 26.003}
     retval = tuple(cursor.execute("SELECT ?", (json.dumps(val),)))
     assert retval[0][0] == '{"name": "Apollo 11 Cave", ' \
-                           '"zebra": true,' \
-                           '"age": 26.003}'
+                           '"zebra": true,'\
+                           ' "age": 26.003}'
 
 
 def test_jsonb_roundtrip(cursor):
@@ -317,7 +317,7 @@ def test_jsonb_roundtrip(cursor):
     cursor.execute("SELECT cast(? as jsonb)", (json.dumps(val),))
     retval = cursor.fetchall()
     assert retval[0][0] == '{"age": 26.003,' \
-                           '"name": "Apollo 11 Cave",' \
+                           ' "name": "Apollo 11 Cave", ' \
                            '"zebra": true}'
 
 
