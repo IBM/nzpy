@@ -266,7 +266,7 @@ class Handshake():
 
             if information == HSV2_SSL_CONNECT:
                 try:
-                    self._usock = ssl.SSLContext.wrap_socket(self._usock)
+                    self._usock = ssl.SSLContext().wrap_socket(self._usock)
                     self._sock = self._usock.makefile(mode="rwb")
                     self.log.info("Secured Connect Success")
                 except ssl.SSLError:
