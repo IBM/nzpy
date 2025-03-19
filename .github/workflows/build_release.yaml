@@ -25,9 +25,22 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install build twine --user
           pip install setuptools wheel
+
+      - name: Update version in setup.py
+        run: |
+          echo "Using release tag: ${{ github.event.release.tag_name }}"
+          sed -i "s/version=''/version='${{ github.event.release.tag_name }}'/" setup.py
+
+      - name: Verify update
+        run: |
+          # Verify that the version is updated in setup.py
+          grep 'version=' setup.py
+
       - name: Build package
         run: |
           python3 -m build
+          ls dist/
+
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
         with:
