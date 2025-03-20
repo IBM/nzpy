@@ -7,7 +7,7 @@ readme = os.path.join(os.path.dirname(__file__), "README.md")
 
 setup(
     name="nzpy",
-    version=1.0,
+    version='',
     description="IBM Netezza python driver",
     long_description=open(readme).read(),
     long_description_content_type='text/markdown',
@@ -16,7 +16,7 @@ setup(
     url="https://github.com/ibm/nzpy",
     license="IBM",
     python_requires='>=3.5',
-    install_requires=['scramp==1.1.0', 'looseversion'],
+    install_requires=['scramp', 'looseversion'],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
