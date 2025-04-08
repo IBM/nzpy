@@ -243,7 +243,7 @@ class Handshake():
     def conn_secure_session(self, securityLevel):
         information = HSV2_SSL_NEGOTIATE
         currSecLevel = securityLevel
-
+        ssl_context = ''
         while information != 0:
             if information == HSV2_SSL_NEGOTIATE:
                 # SecurityLevel meaning
@@ -266,7 +266,7 @@ class Handshake():
 
             if information == HSV2_SSL_CONNECT:
                 try:
-                    self._usock = ssl.SSLContext().wrap_socket(self._usock)
+                    self._usock = ssl_context.wrap_socket(self._usock)
                     self._sock = self._usock.makefile(mode="rwb")
                     self.log.info("Secured Connect Success")
                 except ssl.SSLError:
