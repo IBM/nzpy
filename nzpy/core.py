@@ -739,6 +739,7 @@ class Cursor():
         self._row_count = -1
         self._cached_rows = deque()
         self.notices = deque()
+        self.db_response = deque()
 
     def __enter__(self):
         return self
@@ -878,9 +879,12 @@ class Cursor():
             making up a row.
         """
         try:
-            return tuple(self)
+            return list(self) if self.connection.multiple_flag else tuple(self)
         except TypeError:
             raise ProgrammingError("attempting to use unexecuted cursor")
+
+    def fetchresponse(self):
+        return tuple(self.db_response)
 
     def close(self):
         """Closes the cursor.
@@ -926,6 +930,8 @@ class Cursor():
         self._row_count = -1
         self._cached_rows.clear()
         self.notices.clear()
+        self.db_response.clear()
+        self.query_data = []
 
 
 # Message codes
@@ -1147,6 +1153,9 @@ class Connection():
         self.notifications = deque(maxlen=100)
         self.parameter_statuses = deque(maxlen=100)
         self.max_prepared_statements = int(max_prepared_statements)
+
+        self.query_data = ()
+        self.multiple_flag = False
 
         # honor logging.* log level constants if specified
         if logLevel not in (logging.DEBUG, logging.ERROR,
@@ -1811,6 +1820,8 @@ class Connection():
         else:
             query = self.Prepare(cursor, query, vals)
 
+        self.multiple_flag = True if len(query.split(';')[:-1]) > 1 else False
+
         if self.status == CONN_EXECUTING:
             self._read(4)
 
@@ -1858,6 +1869,20 @@ class Connection():
                 self.handle_COMMAND_COMPLETE(data, cursor)
                 self.log.debug("Response received from "
                                "backend: %s", str(data, self._client_encoding))
+                response_recieved = str(data, self._client_encoding)
+    
+                if response_recieved != "SELECT\x00":
+                    cursor.db_response.append(response_recieved)
+                else:
+                    if self.multiple_flag:
+                        cursor.db_response.append(self.query_data)
+                    else:
+                        cursor.db_response.extend(cursor._cached_rows)
+
+                if self.multiple_flag:
+                    if len(self.query_data) != 0:
+                        cursor._cached_rows.append(self.query_data)
+                    self.query_data = ()
                 continue
             if response == READY_FOR_QUERY:
                 return True
@@ -2268,8 +2293,11 @@ class Connection():
 
             cur_field += 1
             field_lf += 1
-
-        cursor._cached_rows.append(row)
+        if self.multiple_flag:
+            self.query_data += (row,)
+        else:
+            cursor._cached_rows.append(row)
+        
 
     def CTable_FieldAt(self, tupdesc, data, cur_field):
         if tupdesc.field_fixedSize[cur_field] != 0:
@@ -2547,6 +2575,7 @@ class Connection():
 
         data_idx = bitmaplen
         row = []
+
         for i, func in enumerate(cursor.ps['input_funcs']):
             if bitmap[i] == 0:
                 row.append(None)
@@ -2555,8 +2584,11 @@ class Connection():
                 data_idx += 4
                 row.append(func(data, data_idx, vlen - 4))
                 data_idx += vlen - 4
-
-        cursor._cached_rows.append(row)
+        if self.multiple_flag:
+            self.query_data += (row,)
+        else:
+            cursor._cached_rows.append(row)
+        
 
     def handle_messages(self, cursor):
         code = self.error = None
