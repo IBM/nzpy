@@ -243,7 +243,7 @@ class Handshake():
     def conn_secure_session(self, securityLevel):
         information = HSV2_SSL_NEGOTIATE
         currSecLevel = securityLevel
-        ssl_context = ''
+        ssl_context = None
 
         while information != 0:
             if information == HSV2_SSL_NEGOTIATE:
