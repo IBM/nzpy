@@ -78,7 +78,7 @@ class Handshake():
         self.guardium_clientHostName = gethostname()
         self.guardium_applName = path.basename(argv[0])
 
-    def startup(self, database, securityLevel, user, password, pgOptions):
+    def startup(self, database, securityLevel, user, password, pgOptions, skipCertVerification):
         #  Negotiate the handshake version (connection protocol)
         if not self.conn_handshake_negotiate(self._sock.write, self._sock.read,
                                              self._sock.flush, self._hsVersion,
@@ -91,7 +91,7 @@ class Handshake():
                                              self._sock.flush, database,
                                              securityLevel, self._hsVersion,
                                              self._protocol1, self._protocol2,
-                                             user, pgOptions):
+                                             user, pgOptions, skipCertVerification):
             self.log.warning("Error in conn_send_handshake_info")
             return False
 
@@ -165,7 +165,7 @@ class Handshake():
     def conn_send_handshake_info(self, _write, _read, _flush, _database,
                                  securityLevel, _hsVersion,
                                  _protocol1, _protocol2,
-                                 user, pgOptions):
+                                 user, pgOptions, skipCertVerification):
         #  We need database information at the backend in order to
         #  select security restrictions. So always send the database first
         if not self.conn_send_database(_write, _read, _flush, _database):
@@ -173,7 +173,7 @@ class Handshake():
 
         #  If the backend supports security features and if the driver
         #  requires secured session, negotiate security requirements now
-        if not self.conn_secure_session(securityLevel):
+        if not self.conn_secure_session(securityLevel, skipCertVerification):
             return False
 
         if not self.conn_set_next_dataprotocol(self._protocol1,
@@ -240,10 +240,9 @@ class Handshake():
                        self._protocol1, self._protocol2)
         return True
 
-    def conn_secure_session(self, securityLevel):
+    def conn_secure_session(self, securityLevel, skipCertVerification):
         information = HSV2_SSL_NEGOTIATE
         currSecLevel = securityLevel
-
         while information != 0:
             if information == HSV2_SSL_NEGOTIATE:
                 # SecurityLevel meaning
@@ -294,8 +293,11 @@ class Handshake():
                         ssl_context = ssl.create_default_context(
                             cafile=ca_certs)
                         ssl_context.check_hostname = False
-                        if ca_certs is None:
+                        if ca_certs is None or ca_certs == "":
                             ssl_context.verify_mode = ssl.CERT_NONE
+                            if not skipCertVerification:
+                                self.log.warning("Could not load ca certificate %s : too long , possibly corrupted or file not found",ca_certs)
+                                return False
                         else:
                             ssl_context.verify_mode = ssl.CERT_REQUIRED
 

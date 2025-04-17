@@ -1138,7 +1138,7 @@ class Connection():
             securityLevel, timeout, application_name,
             max_prepared_statements, datestyle, logLevel, tcp_keepalive,
             char_varchar_encoding, logOptions=LogOptions.Inherit,
-            pgOptions=None):
+            pgOptions=None, skipCertVerification=False):
         self._char_varchar_encoding = char_varchar_encoding
         self._client_encoding = "utf8"
         self._commands_with_count = (
@@ -1518,7 +1518,7 @@ class Connection():
 
         hs = handshake.Handshake(self._usock, self._sock, ssl, self.log)
         response = hs.startup(database, securityLevel,
-                              user, password, pgOptions)
+                              user, password, pgOptions, skipCertVerification)
 
         if response is not False:
             self._flush = response.flush
