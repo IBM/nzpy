@@ -1,17 +1,15 @@
+import os
 import subprocess
 import sys
-
 import nzpy
-
 import pytest
 
 
 @pytest.fixture(scope="class")
 def db_kwargs():
     db_connect = {
-        'user': 'admin',
-        'password': 'password',
-        'database': 'nzpy_test'
+        'user': os.environ.get('NZPY_USER'),
+        'password': os.environ.get('NZPY_PASSWORD')
     }
 
     try:
@@ -23,6 +21,9 @@ def db_kwargs():
 
 @pytest.fixture
 def con(request, db_kwargs):
+    if os.environ.get('NZPY_IS_REMOTE'):
+        db_kwargs['host'] = os.environ.get('NZPY_HOST')
+        db_kwargs['database'] = os.environ.get('NZPY_DATABASE')
     try:
         sql = ['''nzsql -d "system" -Axc "drop database nzpy_test" ''', ]
         newProc = subprocess.Popen(sql, stdout=subprocess.PIPE)
