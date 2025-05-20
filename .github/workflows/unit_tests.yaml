@@ -18,8 +18,8 @@ concurrency:
 jobs:
   unit:
     name: Unit Tests
-    runs-on: ubuntu-latest  # This ensures it runs on an Ubuntu machine for more compatibility with libraries
-
+    runs-on: ubuntu-latest  # GitHub-hosted runners with Ubuntu
+    
     container:
       image: registry.access.redhat.com/ubi8/python-39
       options: --user root
@@ -33,17 +33,25 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup Python 3.9
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
+      - name: Install Python 3.12, pip, and tox
         run: |
-          yum install python3.9
+          # Install dependencies for Python 3.12
+          sudo yum -y groupinstall "Development Tools"
+          sudo yum -y install gcc openssl-devel bzip2-devel libffi-devel zlib-devel
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install tox
+          # Download Python 3.12 source
+          curl -O https://www.python.org/ftp/python/3.12.3/Python-3.12.3.tgz
+          tar -xzf Python-3.12.3.tgz
+          cd Python-3.12.3
+
+          # Build and install Python 3.12
+          ./configure --enable-optimizations
+          sudo make altinstall
+
+          # Upgrade pip and install tox
+          sudo /usr/local/bin/python3.12 -m ensurepip --upgrade
+          sudo /usr/local/bin/python3.12 -m pip install --upgrade pip
+          sudo /usr/local/bin/python3.12 -m pip install tox
 
       - name: Inject environment variables into tox.ini
         run: |
@@ -62,7 +70,7 @@ jobs:
           
       - name: Run unit tests with tox
         run: |
-          tox
+          /usr/local/bin/python3.12 -m tox
         shell: bash
 
       - name: Clean up tox.ini (remove secrets)
