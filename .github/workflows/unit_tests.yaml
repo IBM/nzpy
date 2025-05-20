@@ -1,0 +1,47 @@
+name: Unit Tests
+
+on:
+  push:
+    branches:
+    - main
+  workflow_dispatch:
+
+permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ contains(github.event_name, 'pull_request') && github.event.pull_request.head.ref || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox
+      - name: Run unit tests with tox
+        run: |
+          tox
+        shell: bash
+        env:
+          NZPY_IS_REMOTE: ${{ secrets.NZPY_IS_REMOTE }}
+          NZPY_HOST: ${{ secrets.NZPY_HOST }}
+          NZPY_USER: ${{ secrets.NZPY_USER }}
+          NZPY_PASSWORD: ${{ secrets.NZPY_PASSWORD }}
+          NZPY_DATABASE: ${{ secrets.NZPY_DATABASE }}
