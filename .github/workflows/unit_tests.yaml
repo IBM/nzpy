@@ -41,6 +41,11 @@ jobs:
           
       - name: Run unit tests with tox
         run: |
+          echo "NZPY_IS_REMOTE=${NZPY_IS_REMOTE}"
+          echo "NZPY_HOST=${NZPY_HOST}"
+          echo "NZPY_USER=${NZPY_USER}"
+          echo "NZPY_PASSWORD=${NZPY_PASSWORD}"
+          echo "NZPY_DATABASE=${NZPY_DATABASE}"
           tox
         shell: bash
         env:
