@@ -35,8 +35,8 @@ jobs:
 
       - name: Install Python 3.12, pip, and tox
         run: |
-          yum install python3.12
-          yum install python3.12-pip
+          yum install python3.12 -y
+          yum install python3.12-pip -y
           pip install tox
 
       - name: Inject environment variables into tox.ini
