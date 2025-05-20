@@ -56,7 +56,7 @@ jobs:
           
       - name: Run unit tests with tox
         run: |
-          /usr/local/bin/python3.12 -m tox
+          tox
         shell: bash
 
       - name: Clean up tox.ini (remove secrets)
