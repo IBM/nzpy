@@ -57,6 +57,7 @@ jobs:
           
       - name: Run unit tests with tox
         run: |
+          python3 test.py
           tox
         shell: bash
 
