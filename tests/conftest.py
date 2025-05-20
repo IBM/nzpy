@@ -11,7 +11,8 @@ def db_kwargs():
         'user': os.environ.get('NZPY_USER'),
         'password': os.environ.get('NZPY_PASSWORD')
     }
-
+    print(f'The value of user : {os.environ.get('NZPY_USER')}')
+    print(f'The value of NZPY_PASSWORD : {os.environ.get('NZPY_PASSWORD')}')
     try:
         db_connect['port'] = 5480
     except KeyError:
@@ -36,7 +37,7 @@ def con(request, db_kwargs):
         newProc.wait()
     except Exception as exp:
         print(exp)
-
+    print(f'The value of db_kwargs : {db_kwargs}')
     conn = nzpy.connect(**db_kwargs)
 
     def fin():
