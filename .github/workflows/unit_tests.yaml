@@ -46,6 +46,7 @@ jobs:
           sed -i 's|__NZPY_USER__|'"${NZPY_USER}"'|g' tox.ini
           sed -i 's|__NZPY_PASSWORD__|'"${NZPY_PASSWORD}"'|g' tox.ini
           sed -i 's|__NZPY_DATABASE__|'"${NZPY_DATABASE}"'|g' tox.ini
+          cat tox.ini
         env:
           NZPY_IS_REMOTE: ${{ secrets.NZPY_IS_REMOTE }}
           NZPY_HOST: ${{ secrets.NZPY_HOST }}
