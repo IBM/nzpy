@@ -39,6 +39,7 @@ def con(request, db_kwargs):
         print(exp)
     print(f'The value of db_kwargs : {db_kwargs}')
     conn = nzpy.connect(**db_kwargs)
+    print(f"The connection is created successfully")
 
     def fin():
         conn.rollback()
