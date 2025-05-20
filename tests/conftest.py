@@ -12,8 +12,8 @@ def db_kwargs():
         'password': os.environ.get('NZPY_PASSWORD')
     }
     print(f'The value of user : {os.environ.get('NZPY_USER')}')
-    if os.environ.get('NZPY_USER') == 'admin':
-        print("yes this is admin")
+    if os.environ.get('NZPY_HOST') == 'ayush-nz1.fyre.ibm.com':
+        print("yes this is host")
     print(f'The value of NZPY_PASSWORD : {os.environ.get('NZPY_PASSWORD')}')
     try:
         db_connect['port'] = 5480
