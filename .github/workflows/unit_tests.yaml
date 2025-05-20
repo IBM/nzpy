@@ -20,6 +20,10 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
 
+    container:
+      image: registry.access.redhat.com/ubi8/python-39
+      options: --user root
+
     strategy:
       fail-fast: false
 
@@ -32,13 +36,13 @@ jobs:
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.9 
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install tox
-  
+
       - name: Inject environment variables into tox.ini
         run: |
           sed -i 's|__NZPY_IS_REMOTE__|'"${NZPY_IS_REMOTE}"'|g' tox.ini
@@ -66,5 +70,4 @@ jobs:
           sed -i 's|'"${NZPY_USER}"'|__NZPY_USER__|g' tox.ini
           sed -i 's|'"${NZPY_PASSWORD}"'|__NZPY_PASSWORD__|g' tox.ini
           sed -i 's|'"${NZPY_DATABASE}"'|__NZPY_DATABASE__|g' tox.ini
-
-        
+          cat tox.ini 
