@@ -18,11 +18,7 @@ concurrency:
 jobs:
   unit:
     name: Unit Tests
-    runs-on: ubuntu-latest  # GitHub-hosted runners with Ubuntu
-    
-    container:
-      image: registry.access.redhat.com/ubi8
-      options: --user root
+    runs-on: macos-latest  # Change to macOS runner
 
     strategy:
       fail-fast: false
@@ -35,17 +31,28 @@ jobs:
 
       - name: Install Python 3.12, pip, and tox
         run: |
-          yum install python3.12 -y
-          yum install python3.12-pip -y
-          pip3 install tox
+          # Install Homebrew if it's not already installed
+          if ! command -v brew &> /dev/null; then
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          fi
+
+          # Install Python 3.12 using Homebrew
+          brew install python@3.12
+
+          # Link Python 3.12 so it can be used as default
+          brew link --overwrite --force python@3.12
+
+          # Upgrade pip and install tox
+          python3 -m pip install --upgrade pip
+          python3 -m pip install tox
 
       - name: Inject environment variables into tox.ini
         run: |
-          sed -i 's|__NZPY_IS_REMOTE__|'"${NZPY_IS_REMOTE}"'|g' tox.ini
-          sed -i 's|__NZPY_HOST__|'"${NZPY_HOST}"'|g' tox.ini
-          sed -i 's|__NZPY_USER__|'"${NZPY_USER}"'|g' tox.ini
-          sed -i 's|__NZPY_PASSWORD__|'"${NZPY_PASSWORD}"'|g' tox.ini
-          sed -i 's|__NZPY_DATABASE__|'"${NZPY_DATABASE}"'|g' tox.ini
+          sed -i '' 's|__NZPY_IS_REMOTE__|'"${NZPY_IS_REMOTE}"'|g' tox.ini
+          sed -i '' 's|__NZPY_HOST__|'"${NZPY_HOST}"'|g' tox.ini
+          sed -i '' 's|__NZPY_USER__|'"${NZPY_USER}"'|g' tox.ini
+          sed -i '' 's|__NZPY_PASSWORD__|'"${NZPY_PASSWORD}"'|g' tox.ini
+          sed -i '' 's|__NZPY_DATABASE__|'"${NZPY_DATABASE}"'|g' tox.ini
           cat tox.ini  # Output the tox.ini file to verify secrets were injected
         env:
           NZPY_IS_REMOTE: ${{ secrets.NZPY_IS_REMOTE }}
@@ -53,17 +60,17 @@ jobs:
           NZPY_USER: ${{ secrets.NZPY_USER }}
           NZPY_PASSWORD: ${{ secrets.NZPY_PASSWORD }}
           NZPY_DATABASE: ${{ secrets.NZPY_DATABASE }}
-          
+
       - name: Run unit tests with tox
         run: |
-          tox
+          python3 -m tox
         shell: bash
 
       - name: Clean up tox.ini (remove secrets)
         run: |
-          sed -i 's|'"${NZPY_IS_REMOTE}"'|__NZPY_IS_REMOTE__|g' tox.ini
-          sed -i 's|'"${NZPY_HOST}"'|__NZPY_HOST__|g' tox.ini
-          sed -i 's|'"${NZPY_USER}"'|__NZPY_USER__|g' tox.ini
-          sed -i 's|'"${NZPY_PASSWORD}"'|__NZPY_PASSWORD__|g' tox.ini
-          sed -i 's|'"${NZPY_DATABASE}"'|__NZPY_DATABASE__|g' tox.ini
-          cat tox.ini 
+          sed -i '' 's|'"${NZPY_IS_REMOTE}"'|__NZPY_IS_REMOTE__|g' tox.ini
+          sed -i '' 's|'"${NZPY_HOST}"'|__NZPY_HOST__|g' tox.ini
+          sed -i '' 's|'"${NZPY_USER}"'|__NZPY_USER__|g' tox.ini
+          sed -i '' 's|'"${NZPY_PASSWORD}"'|__NZPY_PASSWORD__|g' tox.ini
+          sed -i '' 's|'"${NZPY_DATABASE}"'|__NZPY_DATABASE__|g' tox.ini
+          cat tox.ini  # Output the tox.ini file after cleanup
