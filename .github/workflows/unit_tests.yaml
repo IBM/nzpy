@@ -38,19 +38,32 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install tox
-          
-      - name: Run unit tests with tox
+  
+      - name: Inject environment variables into tox.ini
         run: |
-          echo "NZPY_IS_REMOTE=${NZPY_IS_REMOTE}"
-          echo "NZPY_HOST=${NZPY_HOST}"
-          echo "NZPY_USER=${NZPY_USER}"
-          echo "NZPY_PASSWORD=${NZPY_PASSWORD}"
-          echo "NZPY_DATABASE=${NZPY_DATABASE}"
-          tox
-        shell: bash
+          sed -i 's|__NZPY_IS_REMOTE__|'"${NZPY_IS_REMOTE}"'|g' tox.ini
+          sed -i 's|__NZPY_HOST__|'"${NZPY_HOST}"'|g' tox.ini
+          sed -i 's|__NZPY_USER__|'"${NZPY_USER}"'|g' tox.ini
+          sed -i 's|__NZPY_PASSWORD__|'"${NZPY_PASSWORD}"'|g' tox.ini
+          sed -i 's|__NZPY_DATABASE__|'"${NZPY_DATABASE}"'|g' tox.ini
         env:
           NZPY_IS_REMOTE: ${{ secrets.NZPY_IS_REMOTE }}
           NZPY_HOST: ${{ secrets.NZPY_HOST }}
           NZPY_USER: ${{ secrets.NZPY_USER }}
           NZPY_PASSWORD: ${{ secrets.NZPY_PASSWORD }}
           NZPY_DATABASE: ${{ secrets.NZPY_DATABASE }}
+          
+      - name: Run unit tests with tox
+        run: |
+          tox
+        shell: bash
+
+      - name: Clean up tox.ini (remove secrets)
+        run: |
+          sed -i 's|'"${NZPY_IS_REMOTE}"'|__NZPY_IS_REMOTE__|g' tox.ini
+          sed -i 's|'"${NZPY_HOST}"'|__NZPY_HOST__|g' tox.ini
+          sed -i 's|'"${NZPY_USER}"'|__NZPY_USER__|g' tox.ini
+          sed -i 's|'"${NZPY_PASSWORD}"'|__NZPY_PASSWORD__|g' tox.ini
+          sed -i 's|'"${NZPY_DATABASE}"'|__NZPY_DATABASE__|g' tox.ini
+
+        
