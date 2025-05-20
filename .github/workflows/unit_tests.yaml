@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest  # GitHub-hosted runners with Ubuntu
     
     container:
-      image: registry.access.redhat.com/ubi8/python-39
+      image: registry.access.redhat.com/ubi8
       options: --user root
 
     strategy:
@@ -66,4 +66,4 @@ jobs:
           sed -i 's|'"${NZPY_USER}"'|__NZPY_USER__|g' tox.ini
           sed -i 's|'"${NZPY_PASSWORD}"'|__NZPY_PASSWORD__|g' tox.ini
           sed -i 's|'"${NZPY_DATABASE}"'|__NZPY_DATABASE__|g' tox.ini
-          cat tox.ini  # Output the tox.ini file after cleanup
+          cat tox.ini 
