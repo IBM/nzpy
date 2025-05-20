@@ -2,7 +2,6 @@
 
 ## Scope
 
-test1234
 nzpy is a pure-Python IBM Netezza driver that complies with DB-API 2.0. It is tested on Python versions 3.5+. It is supported with NPS 11.1.2.x and later. Although nzpy works with older NPS versions but it do not support few features such as external table, parameter style query etc.
 
 ## Installation
