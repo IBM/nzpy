@@ -57,8 +57,6 @@ jobs:
           
       - name: Run unit tests with tox
         run: |
-          pip3 install -r requirements.txt
-          python3 test.py
           tox
         shell: bash
 
