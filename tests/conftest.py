@@ -8,8 +8,8 @@ import pytest
 @pytest.fixture(scope="class")
 def db_kwargs():
     db_connect = {
-        'user': os.environ.get('NZPY_USER'),
-        'password': os.environ.get('NZPY_PASSWORD')
+        'user': 'admin',
+        'password': 'password'
     }
     print(f'The value of user : {os.environ.get('NZPY_USER')}')
     if os.environ.get('NZPY_HOST') == 'ayush-nz1.fyre.ibm.com':
