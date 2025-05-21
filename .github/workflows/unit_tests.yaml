@@ -34,7 +34,7 @@ jobs:
 
       - name: Install Python 3.12, pip, and tox
         run: |
-          brew install python@3.12 -y  # Ensure the version is explicitly mentioned
+          brew install python@3.12
           python3 -m venv venv
           source venv/bin/activate
           pip install tox
