@@ -112,7 +112,7 @@ class Handshake():
         self.log.debug("Latest-handshake version (conn-protocol) "
                        "= %s", version)
 
-        while(1):
+        while 1:
             if version == CP_VERSION_6:
                 version = CP_VERSION_6
 
@@ -302,9 +302,11 @@ class Handshake():
                         information = HSV2_SSL_CONNECT
 
                     except ImportError:
-                        raise core.InterfaceError("SSL required but ssl "
-                                             "module not available in this "
-                                             "python installation")
+                        raise core.InterfaceError(
+                            "SSL required but ssl "
+                            "module not available in this "
+                            "python installation"
+                            )
 
                     except ssl.SSLError:
                         if currSecLevel == 2:
@@ -554,9 +556,11 @@ class Handshake():
             salt = _read(2)
             self.log.debug("Salt =%s", salt)
             if password is None:
-                raise core.InterfaceError("server requesting MD5 password "
-                                     "authentication, but no password "
-                                     "was provided")
+                raise core.InterfaceError(
+                    "server requesting MD5 password "
+                    "authentication, but no password "
+                    "was provided"
+                    )
             sha256encoded = sha256(salt+password)
             sha256pwd = base64.standard_b64encode(sha256encoded.digest())
             pwd = sha256pwd.rstrip(b"=")

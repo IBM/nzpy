@@ -11,22 +11,27 @@ const_data_ten = []
 class NumericVar():
 
     def __init__(self):
-         self.data           = []
-         self.scale          = None
-         self.rscale         = None
-         self.rprecision     = None
+        self.data = []
+        self.scale = None
+        self.rscale = None
+        self.rprecision = None
+
 
 def int32_to_uint32(i):
     return ctypes.c_uint32(i).value
 
+
 def base():
     return (1 << 32)
+
 
 def highPart(val):
     return (val >> 32)
 
+
 def lowPart(val):
     return (val & (1 << 32) - 1)
+
 
 def encodeNum(words, low, hi):
     words[0] = int(lowPart(low))
@@ -34,13 +39,16 @@ def encodeNum(words, low, hi):
     words[2] = int(lowPart(hi))
     words[3] = int(highPart(hi))
 
-#TODO: this function ultimately does nothing. Either remove it or redesign it.
+
+# TODO: this function ultimately does nothing. Either remove it or redesign it.
 def decodeNum(words, low, hi):
-    low = words[0] | words[1]*(1<<32)
-    hi = words[2] | words[3]*(1<<32)
+    low = words[0] | words[1]*(1 << 32)
+    hi = words[2] | words[3]*(1 << 32)
+
 
 def isNumeric_Data_Negative(numdataP):
     return (numdataP[0] & 0x80000000) != 0
+
 
 def copy_128(srcP):
     destP = []
@@ -50,16 +58,18 @@ def copy_128(srcP):
     destP.append(srcP[3])
     return destP
 
+
 def negate_128(arg):
-    #First complement the value (1's complement)
+    # First complement the value (1's complement)
     for i in range(MAX_NUMERIC_DIGIT_COUNT):
         arg[i] = int32_to_uint32(~arg[i])
 
-    #Then increment it to form 2's complement (negative)
+    # Then increment it to form 2's complement (negative)
     return inc_128(arg)
 
-#for 2's complement
-def inc_128(arg ):
+
+# for 2's complement
+def inc_128(arg):
     i = MAX_NUMERIC_DIGIT_COUNT
     carry = True
     bInputNegative = isNumeric_Data_Negative(arg)
@@ -74,6 +84,7 @@ def inc_128(arg ):
         return isNumeric_Data_Negative(arg)
     else:
         return False
+
 
 def div_128(numeratorP, denominatorP, resultP):
     hiquotient = 0
@@ -108,14 +119,14 @@ def div_128(numeratorP, denominatorP, resultP):
     if bResNegative:
         if negate_128(resultP):
             return True
-
     return False
+
 
 def div10_128(numeratorP, quotientP):
     remainder = 0
 
     for i in range(MAX_NUMERIC_DIGIT_COUNT):
-        work = numeratorP[i] + (remainder<<32)
+        work = numeratorP[i] + (remainder << 32)
         if work != 0:
             quotientP[i] = int(work / 10)
             remainder = int(work % 10)
@@ -124,10 +135,11 @@ def div10_128(numeratorP, quotientP):
             remainder = 0
     return remainder
 
+
 def PYTHON_numeric_load_var(dataP, precision, scale, digitCount):
     varP = NumericVar()
 
-    #extend sign
+    # extend sign
     sign = dataP[0] & 0x80000000
     if sign != 0:
         leadDigit = 0xffffffff
@@ -178,7 +190,7 @@ def round_var(nvar, scale):
         if (aDD != -1) and div_128(workData, power_of_10(-aDD-1), workData):
             return True
 
-        round = (div10_128(workData, temp) > 4) #for rounding ro next number
+        round = (div10_128(workData, temp) > 4) # for rounding ro next number
         if div_128(workData, const_data_ten, workData):
             return True
 
@@ -247,22 +259,6 @@ def mul_double(l1, h1, l2, h2, lv, hv):
     else:
         return ((toplow | tophigh) != 0)
 
-# Negate a doubleword integer with doubleword result.
-# Return nonzero if the operation overflows, assuming it's signed.
-# The argument is given as two `int64' pieces in L1 and H1.
-# The value is stored as two `int64' pieces in *LV and *HV.
-def neg_double(l1 , h1, lv, hv):
-    if l1 == 0:
-        lv = 0 #TODO: value isn't used anywhere. Revise or remove.
-        hv = -h1
-        if (hv & h1) < 0:
-            return 1
-        else:
-            return 0
-    else:
-        lv = -l1 #TODO: value isn't used anywhere. Revise or remove.
-        hv = ~h1
-        return 0
 
 def overflow_sum_sign(a, b, sum):
     if (~(a ^ b) & (a ^ sum)) < 0:
@@ -275,21 +271,21 @@ def overflow_sum_sign(a, b, sum):
 # One argument is L1 and H1; the other, L2 and H2.
 # The value is stored as two `int64' pieces in *LV and *HV.
 def add_double(l1, h1, l2, h2, lv, hv):
-    l = l1 + l2
+    l3 = l1 + l2
 
-    if l < l1:
+    if l3 < l1:
         badd = 1
     else:
         badd = 0
 
     h = h1 + h2 + badd
 
-    lv = l #TODO: value isn't used anywhere. Revise or remove.
-    hv = h #TODO: value isn't used anywhere. Revise or remove.
+    lv = l3 # TODO: value isn't used anywhere. Revise or remove.
+    hv = h # TODO: value isn't used anywhere. Revise or remove.
 
     return overflow_sum_sign(h1, h2, h)
 
-#Get Numeric variable value represented in string format
+# Get Numeric variable value represented in string format
 def get_str_from_var(nvar, dscale):
     res = ""
     unbiasedDigits = []
@@ -329,13 +325,13 @@ def get_str_from_var(nvar, dscale):
         res += '-'
 
     if dscale != 0:
-        iplaces = tmp - dscale #value before decimal
+        iplaces = tmp - dscale # value before decimal
         for i in range(iplaces):
             res += str(work[i])
 
-        res += '.' #decimal point
+        res += '.' # decimal point
         pos +=1
-        for i in range(dscale):    #1 more size to copy \0
+        for i in range(dscale):    # 1 more size to copy \0
             res += str(work[i+iplaces])
 
     else:
@@ -408,8 +404,10 @@ def mul_128(v1, v2, vRes):
 
         a = load_8_digit(v1abs)
         b = load_8_digit(v2abs)
+        c = []
+        w = []
 
-        #TODO: w below is not yet defined. Was this code tested?
+        # TODO: w below is not yet defined. Was this code tested?
         w.append(a[0]*b[0])
         w.append(a[1]*b[0] + a[0]*b[1])
         w.append(a[2]*b[0] + a[1]*b[1] + a[0]*b[2])
@@ -429,7 +427,7 @@ def mul_128(v1, v2, vRes):
         i = 15
         while i > 0:
             w[i-1] += carry
-            #TODO: same for c - it is not defined yet.
+            # TODO: same for c - it is not defined yet.
             c.append(int(w[i-1] & 0xffff))
             carry = (int(w[i-1] >> 16))
             i -=1
@@ -494,7 +492,7 @@ def power_of_10(exponent):
             powersOfTen[i].append(next[2])
             powersOfTen[i].append(next[3])
             if mul10_and_add(next, 0): # use convenient helper routine in this one-time initing
-                #assert(false);          # shouldn't happen if our loop limit correct
+                # assert(false);          # shouldn't happen if our loop limit correct
                 pass
 
         needsInit = False
@@ -512,7 +510,7 @@ def power_of_10(exponent):
 # The value is stored as two `int64' pieces in *LV and *HV.
 def neg_double(l1, h1, lv, hv):
     if l1 == 0:
-        lv = 0 #TODO: value isn't used anywhere. Revise or remove.
+        lv = 0 # TODO: value isn't used anywhere. Revise or remove.
         hv = -h1
         if (hv & h1) < 0:
             return 1
@@ -520,8 +518,8 @@ def neg_double(l1, h1, lv, hv):
             return 0
 
     else:
-        lv = -l1 #TODO: value isn't used anywhere. Revise or remove.
-        hv = ~h1 #TODO: value isn't used anywhere. Revise or remove.
+        lv = -l1 # TODO: value isn't used anywhere. Revise or remove.
+        hv = ~h1 # TODO: value isn't used anywhere. Revise or remove.
         return 0
 
 # Divide doubleword integer LNUM, HNUM by doubleword integer LDEN, HDEN
@@ -536,7 +534,7 @@ def div_and_round_double(uns, lnum_orig, hnum_orig, lden_orig, hden_orig, lquo, 
     num = [0, 0, 0, 0, 0] # extra element for scaling.
     den = [0, 0, 0, 0]
     quo = [0, 0, 0, 0]
-    carry = overflow = quo_neg = 0   #register UNSIGNEDINT64 carry = 0;
+    carry = overflow = quo_neg = 0   # register UNSIGNEDINT64 carry = 0;
     lnum = lnum_orig
     hnum = hnum_orig
     lden = lden_orig
@@ -545,12 +543,12 @@ def div_and_round_double(uns, lnum_orig, hnum_orig, lden_orig, hden_orig, lquo, 
     # calculate quotient sign and convert operands to unsigned.
     if uns != 0:
         if hnum < 0:
-            quo_neg = ~quo_neg #~ quo_neg;
+            quo_neg = ~quo_neg # ~ quo_neg;
             # (minimum integer) / (-1) is the only overflow case.
             if (neg_double(lnum, hnum, lnum, hnum) != 0) and ((lden & hden) == -1):
                 overflow = 1
         if hden < 0:
-            quo_neg = ~quo_neg  #~ quo_neg;
+            quo_neg = ~quo_neg  # ~ quo_neg;
             neg_double(lden, hden, lden, hden)
 
     if hnum == 0 and hden == 0: # single precision
@@ -598,7 +596,7 @@ def div_and_round_double(uns, lnum_orig, hnum_orig, lden_orig, hden_orig, lquo, 
         # with thanks to Don Knuth's "Seminumerical Algorithms".
         # Find the highest non-zero divisor digit.
         i = 4 - 1
-        while(1):
+        while 1:
             if den[i] != 0:
                 den_hi_sig = i
                 break
@@ -608,7 +606,7 @@ def div_and_round_double(uns, lnum_orig, hnum_orig, lden_orig, hden_orig, lquo, 
         # This is required by the quotient digit estimation algorithm.
 
         scale = int(base() / (den[den_hi_sig]+1))
-        if scale > 1 :  # scale divisor and dividend
+        if scale > 1:  # scale divisor and dividend
             carry = 0
             i = 0
             while i <= 4-1:
