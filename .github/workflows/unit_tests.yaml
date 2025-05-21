@@ -21,7 +21,7 @@ concurrency:
 jobs:
   unit:
     name: Unit Tests
-    runs-on: ubuntu-latest  # GitHub-hosted runners with Ubuntu
+    runs-on: macos-latest
     
     container:
       image: registry.access.redhat.com/ubi8
