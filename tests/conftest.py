@@ -11,10 +11,8 @@ def db_kwargs():
         'user': 'admin',
         'password': 'password'
     }
-    print(f'The value of user : {os.environ.get('NZPY_USER')}')
     if os.environ.get('NZPY_HOST') == 'ayush-nz1.fyre.ibm.com':
         print("yes this is host")
-    print(f'The value of NZPY_PASSWORD : {os.environ.get('NZPY_PASSWORD')}')
     try:
         db_connect['port'] = 5480
     except KeyError:
@@ -39,7 +37,6 @@ def con(request, db_kwargs):
         newProc.wait()
     except Exception as exp:
         print(exp)
-    print(f'The value of db_kwargs : {db_kwargs}')
     conn = nzpy.connect(**db_kwargs)
     print(f"The connection is created successfully")
 
