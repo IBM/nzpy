@@ -45,17 +45,13 @@ jobs:
           sed -i '' 's|__NZPY_HOST__|'"${NZPY_HOST}"'|g' tox.ini
           sed -i '' 's|__NZPY_DATABASE__|'"${NZPY_DATABASE}"'|g' tox.ini
           cat tox.ini 
+          tox
         env:
           NZPY_IS_REMOTE: ${{ secrets.NZPY_IS_REMOTE }}
           NZPY_HOST: ${{ secrets.NZPY_HOST }}
           NZPY_USER: ${{ secrets.NZPY_USER }}
           NZPY_PASSWORD: ${{ secrets.NZPY_PASSWORD }}
           NZPY_DATABASE: ${{ secrets.NZPY_DATABASE }}
-          
-      - name: Run unit tests with tox
-        run: |
-          tox
-        shell: bash
 
       - name: Clean up tox.ini (remove secrets)
         run: |
