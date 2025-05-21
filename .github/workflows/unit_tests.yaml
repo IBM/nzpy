@@ -22,10 +22,6 @@ jobs:
   unit:
     name: Unit Tests
     runs-on: macos-latest
-    
-    container:
-      image: registry.access.redhat.com/ubi8
-      options: --user root
 
     strategy:
       fail-fast: false
@@ -38,8 +34,10 @@ jobs:
 
       - name: Install Python 3.12, pip, and tox
         run: |
-          yum install python3.12 -y
-          yum install python3.12-pip -y
+          brew install python3.12 -y
+          brew install python3.12-pip -y
+          python3 -m venv venv
+          source venv/bin/activate
           pip3 install tox
 
       - name: Inject environment variables into tox.ini
