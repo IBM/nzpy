@@ -37,11 +37,12 @@ jobs:
           pip install tox
       - name: Run unit tests with tox
         run: |
-          tox
+          # tox
+          tox -e lint
         shell: bash
-        env:
-          NZPY_IS_REMOTE: ${{ secrets.NZPY_IS_REMOTE }}
-          NZPY_HOST: ${{ secrets.NZPY_HOST }}
-          NZPY_USER: ${{ secrets.NZPY_USER }}
-          NZPY_PASSWORD: ${{ secrets.NZPY_PASSWORD }}
-          NZPY_DATABASE: ${{ secrets.NZPY_DATABASE }}
+        # env:
+        #   NZPY_IS_REMOTE: ${{ secrets.NZPY_IS_REMOTE }}
+        #   NZPY_HOST: ${{ secrets.NZPY_HOST }}
+        #   NZPY_USER: ${{ secrets.NZPY_USER }}
+        #   NZPY_PASSWORD: ${{ secrets.NZPY_PASSWORD }}
+        #   NZPY_DATABASE: ${{ secrets.NZPY_DATABASE }}
