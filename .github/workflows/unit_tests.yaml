@@ -41,10 +41,10 @@ jobs:
 
       - name: Inject environment variables into tox.ini
         run: |
-          sed -i 's|__NZPY_IS_REMOTE__|'"${NZPY_IS_REMOTE}"'|g' tox.ini
-          sed -i 's|__NZPY_HOST__|'"${NZPY_HOST}"'|g' tox.ini
-          sed -i 's|__NZPY_DATABASE__|'"${NZPY_DATABASE}"'|g' tox.ini
-          cat tox.ini  # Output the tox.ini file to verify secrets were injected
+          sed -i '' 's|__NZPY_IS_REMOTE__|'"${NZPY_IS_REMOTE}"'|g' tox.ini
+          sed -i '' 's|__NZPY_HOST__|'"${NZPY_HOST}"'|g' tox.ini
+          sed -i '' 's|__NZPY_DATABASE__|'"${NZPY_DATABASE}"'|g' tox.ini
+          cat tox.ini 
         env:
           NZPY_IS_REMOTE: ${{ secrets.NZPY_IS_REMOTE }}
           NZPY_HOST: ${{ secrets.NZPY_HOST }}
