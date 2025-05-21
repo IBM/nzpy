@@ -11,8 +11,6 @@ def db_kwargs():
         'user': 'admin',
         'password': 'password'
     }
-    if os.environ.get('NZPY_HOST') == 'ayush-nz1.fyre.ibm.com':
-        print("yes this is host")
     try:
         db_connect['port'] = 5480
     except KeyError:
