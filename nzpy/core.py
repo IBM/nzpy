@@ -2333,7 +2333,7 @@ class Connection():
                 try:
                     blockBuffer = str(self._read(numBytes),
                                       self._client_encoding)
-                    fh = open(fname, "w+")
+                    fh = open(fname, "a")
                     fh.write(blockBuffer)
                     self.log.info("Successfully written data into file")
                 except Exception:
