@@ -1,3 +1,5 @@
+import os
+import stat
 import datetime
 import enum
 import getpass
@@ -1911,7 +1913,13 @@ class Connection():
                 fnameBuf = self._read(length)
                 fname = str(fnameBuf, self._client_encoding)
                 try:
-                    fh = open(fname, "w+")
+                    is_fifo = stat.S_ISFIFO(os.stat(fname).st_mode) if os.path.exists(fname) else False
+                    if is_fifo:
+                        # For FIFOs, use 'w' mode which works better with named pipes
+                        fh = open(fname, "w")
+                    else:
+                        # For regular files we use w+
+                        fh = open(fname, "w+")
                     self.log.debug("Successfully opened file: %s", fname)
                     # file open successfully, send status back to datawriter
                     buf = bytearray(i_pack(0))
@@ -2333,7 +2341,11 @@ class Connection():
                 try:
                     blockBuffer = str(self._read(numBytes),
                                       self._client_encoding)
-                    fh = open(fname, "w+")
+                    is_fifo = stat.S_ISFIFO(os.stat(fname).st_mode) if os.path.exists(fname) else False
+                    if is_fifo:
+                        fh = open(fname, "w")
+                    else:
+                        fh = open(fname, "w+")
                     fh.write(blockBuffer)
                     self.log.info("Successfully written data into file")
                 except Exception:
