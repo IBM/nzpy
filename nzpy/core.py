@@ -2406,7 +2406,7 @@ class Connection():
                       blockSize, hostversion)
 
         try:
-            filehandle = open(filename, 'r')
+            filehandle = open(filename, 'r', encoding='utf-8')
             self.log.info("Successfully opened External"
                           " file to read:%s", filename)
             while True:
