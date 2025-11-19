@@ -2345,7 +2345,7 @@ class Connection():
                     if is_fifo:
                         fh = open(fname, "w")
                     else:
-                        fh = open(fname, "w+")
+                        fh = open(fname, "a+")
                     fh.write(blockBuffer)
                     self.log.info("Successfully written data into file")
                 except Exception:
@@ -2406,7 +2406,7 @@ class Connection():
                       blockSize, hostversion)
 
         try:
-            filehandle = open(filename, 'r')
+            filehandle = open(filename, 'r', encoding='utf-8')
             self.log.info("Successfully opened External"
                           " file to read:%s", filename)
             while True:
