@@ -330,8 +330,8 @@ example:
 5. Create new Pull Request
 6. Assign any one of the reviewers:
    - abhishekjog
-   - sandippawar1412
-   - shabbir10july
+   - SagarSoni1510
+   - Ayush900
 
 <!-- License and Authors is optional here, but gives you the ability to highlight who is involed in the project -->
 ## License 
@@ -355,4 +355,3 @@ limitations under the License.
 ```
 
 [issues]: https://github.com/IBM/nzpy/issues/new
-
