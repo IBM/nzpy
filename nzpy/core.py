@@ -1076,11 +1076,12 @@ NzDEPR_NText = 27
 NzTypeJson = 30
 NzTypeJsonb = 31
 NzTypeJsonpath = 32
-NzTypeLastEntry = 33
+NzTypeVector = 33
+NzTypeLastEntry = 34
 #  KEEP THIS ENTRY LAST - used internally to size an array
 
 #  this is version of nzpy driver
-nzpy_client_version = "Release 11.1.0.0"
+nzpy_client_version = "Release 11.3.0.0"
 
 dataType = {
     NzTypeChar: "NzTypeChar",
@@ -1092,7 +1093,8 @@ dataType = {
     NzTypeNVarChar: "NzTypeNVarChar",
     NzTypeJson: "NzTypeJson",
     NzTypeJsonb: "NzTypeJsonb",
-    NzTypeJsonpath: "NzTypeJsonpath"
+    NzTypeJsonpath: "NzTypeJsonpath",
+    NzTypeVector: "NzTypeVector"
 
 }
 
@@ -2074,7 +2076,7 @@ class Connection():
                 memsize = memsize + 1
             if fldtype == NzTypeNChar or fldtype == NzTypeNVarChar or \
                     fldtype == NzTypeJson or fldtype == NzTypeJsonb or \
-                    fldtype == NzTypeJsonpath:
+                    fldtype == NzTypeJsonpath or fldtype == NzTypeVector:
                 memsize *= 4
                 memsize = memsize + 1
             if fldtype == NzTypeDate:
@@ -2106,7 +2108,7 @@ class Connection():
             if fldtype == NzTypeVarChar or fldtype == NzTypeVarFixedChar or \
                     fldtype == NzTypeGeometry or fldtype == NzTypeVarBinary \
                     or fldtype == NzTypeJson or fldtype == NzTypeJsonb or \
-                    fldtype == NzTypeJsonpath:
+                    fldtype == NzTypeJsonpath or fldtype == NzTypeVector:
                 cursize = int.from_bytes(fieldDataP[0:2], 'little') - 2
                 value = str(fieldDataP[2:cursize + 2],
                             self._char_varchar_encoding)
