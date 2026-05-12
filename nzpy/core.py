@@ -1081,7 +1081,7 @@ NzTypeLastEntry = 34
 #  KEEP THIS ENTRY LAST - used internally to size an array
 
 #  this is version of nzpy driver
-nzpy_client_version = "Release 11.3.0.0"
+nzpy_client_version = "Release 11.3.1.3"
 
 dataType = {
     NzTypeChar: "NzTypeChar",
@@ -2066,17 +2066,12 @@ class Connection():
 
             if fldtype == NzTypeUnknown:
                 fldtype = NzTypeVarChar
-                memsize = memsize + 1
-            if fldtype == NzTypeChar or fldtype == NzTypeVarChar or \
-                    fldtype == NzTypeVarFixedChar or \
-                    fldtype == NzTypeGeometry or fldtype == \
-                    NzTypeVarBinary:
-                memsize = memsize + 1
-            if fldtype == NzTypeNChar or fldtype == NzTypeNVarChar or \
-                    fldtype == NzTypeJson or fldtype == NzTypeJsonb or \
-                    fldtype == NzTypeJsonpath or fldtype == NzTypeVector:
+                memsize += 1
+            if fldtype in [NzTypeChar, NzTypeVarChar, NzTypeVarFixedChar, NzTypeGeometry, NzTypeVarBinary]:
+                memsize += 1
+            if fldtype in [NzTypeNChar, NzTypeNVarChar, NzTypeJson, NzTypeJsonb, NzTypeJsonpath, NzTypeVector]:
                 memsize *= 4
-                memsize = memsize + 1
+                memsize += 1
             if fldtype == NzTypeDate:
                 memsize = 12
             if fldtype == NzTypeTime:
@@ -2096,17 +2091,15 @@ class Connection():
                 self.log.debug("field=%d, datatype=CHAR, "
                                "value=%s", cur_field + 1, value)
 
-            if fldtype == NzTypeNChar or fldtype == NzTypeNVarChar:
+            if fldtype in [NzTypeNChar, NzTypeNVarChar]:
                 cursize = int.from_bytes(fieldDataP[0:2], 'little') - 2
                 value = str(fieldDataP[2:cursize + 2], self._client_encoding)
                 row.append(value)
                 self.log.debug("field=%d, datatype=%s, value=%s",
                                cur_field + 1, dataType[fldtype], value)
 
-            if fldtype == NzTypeVarChar or fldtype == NzTypeVarFixedChar or \
-                    fldtype == NzTypeGeometry or fldtype == NzTypeVarBinary \
-                    or fldtype == NzTypeJson or fldtype == NzTypeJsonb or \
-                    fldtype == NzTypeJsonpath or fldtype == NzTypeVector:
+            if fldtype in [NzTypeVarChar, NzTypeVarFixedChar, NzTypeGeometry, NzTypeVarBinary,
+                           NzTypeJson, NzTypeJsonb, NzTypeJsonpath, NzTypeVector]:
                 cursize = int.from_bytes(fieldDataP[0:2], 'little') - 2
                 value = str(fieldDataP[2:cursize + 2],
                             self._char_varchar_encoding)
@@ -2204,13 +2197,8 @@ class Connection():
                                "value=%s", cur_field + 1, value)
 
             if fldtype == NzTypeTimestamp:
-                if fldlen == 8:
-                    workspace = int.from_bytes(fieldDataP[:fldlen],
-                                               byteorder='little', signed=True)
-                elif fldlen == 4:
-                    workspace = int.from_bytes(fieldDataP[:fldlen],
-                                               byteorder='little', signed=True)
-
+                if fldlen in [4, 8]:
+                    workspace = int.from_bytes(fieldDataP[:fldlen], byteorder='little', signed=True)
                 if fldlen == 8:
                     timestamp_value = timestamp2struct(workspace)
                 elif fldlen == 4:
