@@ -1251,22 +1251,12 @@ class Connection():
         def unknown_out(v):
             return str(v).encode(self._client_encoding)
 
-        trans_tab = dict(zip(map(ord, '{}'), '[]'))
-        glbls = {'Decimal': Decimal}
-
-        def array_in(data, idx, length):
-            arr = []
-            prev_c = None
-            for c in data[idx:idx + length].decode(self._client_encoding).\
-                    translate(trans_tab).replace('NULL', 'None'):
-                if c not in ('[', ']', ',', 'N') and prev_c in ('[', ','):
-                    arr.extend("Decimal('")
-                elif c in (']', ',') and prev_c not in ('[', ']', ',', 'e'):
-                    arr.extend("')")
-
-                arr.append(c)
-                prev_c = c
-            return eval(''.join(arr), glbls)
+        # NOTE: NUMERIC[] (OID 1231) is NOT supported by IBM Netezza
+        # Netezza returns error: "parser_typecast_expression: error reading type '_NUMERIC'"
+        # The array_in() function and OID 1231 mapping have been intentionally removed
+        # as they are PostgreSQL-only features. All Netezza array types use binary
+        # format with array_recv() instead: BOOL[], INT2[], INT4[], INT8[], FLOAT4[],
+        # FLOAT8[], TEXT[], cstring[]
 
         def array_recv(data, idx, length):
             final_idx = idx + length
@@ -1301,8 +1291,15 @@ class Connection():
             return values
 
         def vector_in(data, idx, length):
-            return eval('[' + data[idx:idx + length].decode(
-                self._client_encoding).replace(' ', ',') + ']')
+            text = data[idx:idx + length].decode(self._client_encoding).strip()
+            if not text:
+                return []
+            try:
+                return [int(x) for x in text.split()]
+            except ValueError as e:
+                # Truncate preview to avoid exposing full attacker-controlled payload in logs
+                preview = text[:200] + ("..." if len(text) > 200 else "")
+                raise ValueError(f"Invalid integer vector format: {preview!r}") from e
 
         def text_recv(data, offset, length):
             return str(data[offset: offset + length], self._client_encoding)
@@ -1370,7 +1367,6 @@ class Connection():
                 1114: (FC_BINARY, timestamp_recv_float),  # timestamp w/ tz
                 1184: (FC_BINARY, timestamptz_recv_float),
                 1186: (FC_BINARY, interval_recv_integer),
-                1231: (FC_TEXT, array_in),  # NUMERIC[]
                 1263: (FC_BINARY, array_recv),  # cstring[]
                 1700: (FC_TEXT, numeric_in),  # NUMERIC
                 2275: (FC_BINARY, text_recv),  # cstring
@@ -2740,7 +2736,6 @@ pg_array_types = {
     25: 1009,  # TEXT[]
     701: 1022,
     1043: 1009,
-    1700: 1231,  # NUMERIC[]
 }
 
 # PostgreSQL encodings:
