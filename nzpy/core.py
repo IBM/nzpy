@@ -1142,7 +1142,7 @@ class Connection():
             securityLevel, timeout, application_name,
             max_prepared_statements, datestyle, logLevel, tcp_keepalive,
             char_varchar_encoding, logOptions=LogOptions.Inherit,
-            pgOptions=None, skipCertVerification=False):
+            pgOptions=None, skipCertVerification=None):
         self._char_varchar_encoding = char_varchar_encoding
         self._client_encoding = "utf8"
         self._commands_with_count = (

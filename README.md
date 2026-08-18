@@ -198,33 +198,66 @@ This is `nzpy.LogOptions.Disabled` option
 You can configure logLevel as per your requirement. Any levels in standard `logging` module can be used. The default is `logging.INFO`
 
 
-## SecurityLevel 
-The level of security (SSL/TLS) that the driver uses for the connection to the data store. 
-```
-onlyUnSecured: The driver does not use SSL. 
-preferredUnSecured: If the server provides a choice, the driver does not use SSL. 
-preferredSecured: If the server provides a choice, the driver uses SSL. 
-onlySecured: The driver does not connect unless an SSL connection is available. 
-```
-Similarly, IBM Netezza server has above securityLevel. 
+## SecurityLevel
+The level of security (SSL/TLS) that the driver uses for the connection to the data store.
 
-Cases which would fail :
-- Client tries to connect with 'Only secured' or 'Preferred secured' mode while server is 'Only Unsecured' mode
-- Client tries to connect with 'Only secured' or 'Preferred secured' mode while server is 'Preferred Unsecured' mode
-- Client tries to connect with 'Only Unsecured' or 'Preferred Unsecured' mode while server is 'Only Secured' mode
-- Client tries to connect with 'Only Unsecured' or 'Preferred Unsecured' mode while server is 'Preferred Secured' mode 
+| Value | Name | Description |
+|-------|------|-------------|
+| `0` | Preferred Unsecured | If the server provides a choice, the driver does not use SSL. |
+| `1` | Only Unsecured | The driver does not use SSL. Fails if the server requires SSL. |
+| `2` | Preferred Secured | If the server provides a choice, the driver uses SSL. |
+| `3` | Only Secured | The driver does not connect unless an SSL connection is available. |
 
-Below is an example how you could pass securityLevel and ca certificate in connection string:
+Similarly, the IBM Netezza server has its own securityLevel setting. The client and server levels must be compatible.
+
+**Cases that will fail:**
+- Client uses `Only Secured` (3) or `Preferred Secured` (2) while server is `Only Unsecured`
+- Client uses `Only Secured` (3) or `Preferred Secured` (2) while server is `Preferred Unsecured`
+- Client uses `Only Unsecured` (1) or `Preferred Unsecured` (0) while server is `Only Secured`
+- Client uses `Only Unsecured` (1) or `Preferred Unsecured` (0) while server is `Preferred Secured`
+
+Below is an example of how to pass `securityLevel` and a CA certificate in the connection string:
+```python
+conn = nzpy.connect(user="admin", password="password", host='localhost', port=5480,
+                    database="db1", securityLevel=3, logLevel=0,
+                    ssl={'ca_certs': '/nz/cacert.pem'})
 ```
-conn = nzpy.connect(user="admin", password="password",host='localhost', port=5480, database="db1", securityLevel=3, logLevel=0, ssl = {'ca_certs' : '/nz/cacert.pem'})
+
+## skipCertVerification
+Controls whether the driver verifies the server's SSL certificate when an SSL connection is established.
+
+The default value is derived automatically from `securityLevel` when not explicitly provided:
+
+| `securityLevel` | Default `skipCertVerification` | Reason |
+|-----------------|-------------------------------|--------|
+| `0` (Preferred Unsecured) | `True` | No SSL expected — cert check is irrelevant |
+| `1` (Only Unsecured) | `True` | No SSL expected — cert check is irrelevant |
+| `2` (Preferred Secured) | `False` | SSL intended — server certificate is verified |
+| `3` (Only Secured) | `False` | SSL required — server certificate is verified |
+
+You can always override the default explicitly:
+
+```python
+# securityLevel=3 but skip cert verification (e.g. self-signed cert in dev)
+conn = nzpy.connect(user="admin", password="password", host='localhost', port=5480,
+                    database="db1", securityLevel=3, ssl={},
+                    skipCertVerification=True)
+
+# securityLevel=3 with a CA cert — verify the server certificate (default for level 2/3)
+conn = nzpy.connect(user="admin", password="password", host='localhost', port=5480,
+                    database="db1", securityLevel=3,
+                    ssl={'ca_certs': '/nz/cacert.pem'})
+
+# securityLevel=3 with empty/missing CA cert and skipCertVerification=False (default)
+# — this will FAIL with a warning, as no valid certificate was supplied
+conn = nzpy.connect(user="admin", password="password", host='localhost', port=5480,
+                    database="db1", securityLevel=3, ssl={})
 ```
-Below are the securityLevel you can pass in connection string : 
-```
-0: Preferred Unsecured session
-1: Only Unsecured session
-2: Preferred Secured session
-3: Only Secured session
-```
+
+**Note:** When `skipCertVerification=False` (the default for `securityLevel` 2 and 3) and no valid
+`ca_certs` path is supplied via the `ssl` parameter, the connection will be rejected with a
+warning log message. Supply a valid CA certificate file or explicitly pass `skipCertVerification=True`
+to allow connections without certificate verification.
 
 ## Connection String 
 Use connect to create a database connection with connection parameters: 
@@ -234,15 +267,26 @@ conn = nzpy.connect(user="admin", password="password",host='localhost', port=548
 The above example opens a database handle on localhost. nzpy driver should connect on port 5480(postgres port). The user is admin, password is password, database is db1 and the location of the ca certificate file is /nz/cacert.pem with securityLevel as 'Only Secured session' 
 
 **Connection Parameters**
-When establishing a connection using nzgo you are expected to supply a connection string containing zero or more parameters. Below are subset of the connection parameters supported by nzgo. 
-The following special connection parameters are supported: 
-- database - The name of the database to connect to
-- user - The user to sign in as
-- password - The user's password
-- host - The host to connect to. Values that start with / are for unix domain sockets. (default is localhost)
-- port - The port to bind to. 
-- securityLevel - Whether or not to use SSL (default is 0)
-- ssl - Python dictionary containing location of the root certificate file. The file must contain PEM encoded data.
+When establishing a connection using nzpy you are expected to supply a connection string containing zero or more parameters. The following connection parameters are supported:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `user` | str | *(required)* | The user to sign in as |
+| `password` | str | `None` | The user's password |
+| `host` | str | `'localhost'` | The host to connect to. Values starting with `/` are unix domain sockets |
+| `port` | int | `5432` | The port to connect to |
+| `database` | str | `None` | The name of the database to connect to |
+| `securityLevel` | int | `0` | SSL/TLS mode: `0` Preferred Unsecured, `1` Only Unsecured, `2` Preferred Secured, `3` Only Secured |
+| `ssl` | dict | `None` | Dictionary with optional key `ca_certs` pointing to a PEM-encoded CA certificate file |
+| `skipCertVerification` | bool | auto | Whether to skip SSL certificate verification. Defaults to `True` for `securityLevel` 0/1, `False` for 2/3. See [skipCertVerification](#skipcertverification) |
+| `timeout` | int | `None` | Socket connection timeout in seconds |
+| `logLevel` | int | `0` | Logging verbosity. Accepts `logging.*` constants or `0`=DEBUG, `1`=INFO, `2`=WARNING |
+| `logOptions` | LogOptions | `LogOptions.Inherit` | Logging destination flags. See [Logging](#logging) |
+| `char_varchar_encoding` | str | `'latin'` | Encoding for char/varchar columns |
+| `application_name` | str | `None` | Application name reported to the server |
+| `max_prepared_statements` | int | `1000` | Maximum number of prepared statements to cache |
+| `tcp_keepalive` | bool | `True` | Whether to enable TCP keepalive on the connection socket |
+| `pgOptions` | str | `None` | Additional PostgreSQL options string |
 
 
 ## Transactions 

@@ -79,7 +79,7 @@ class Handshake():
         self.guardium_applName = path.basename(argv[0])
 
     def startup(self, database, securityLevel, user, password, pgOptions,
-                skipCertVerification=False):
+                skipCertVerification=None):
         #  Negotiate the handshake version (connection protocol)
         if not self.conn_handshake_negotiate(self._sock.write, self._sock.read,
                                              self._sock.flush, self._hsVersion,
@@ -167,7 +167,7 @@ class Handshake():
     def conn_send_handshake_info(self, _write, _read, _flush, _database,
                                  securityLevel, _hsVersion,
                                  _protocol1, _protocol2,
-                                 user, pgOptions, skipCertVerification=False):
+                                 user, pgOptions, skipCertVerification=None):
         #  We need database information at the backend in order to
         #  select security restrictions. So always send the database first
         if not self.conn_send_database(_write, _read, _flush, _database):
@@ -242,7 +242,7 @@ class Handshake():
                        self._protocol1, self._protocol2)
         return True
 
-    def conn_secure_session(self, securityLevel, skipCertVerification=False):
+    def conn_secure_session(self, securityLevel, skipCertVerification=None):
         information = HSV2_SSL_NEGOTIATE
         currSecLevel = securityLevel
         ssl_context = None
