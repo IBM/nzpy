@@ -293,19 +293,41 @@ class Handshake():
                         import ssl
 
                         ca_certs = self.ssl_params.get('ca_certs')
-                        ssl_context = ssl.create_default_context(
-                            cafile=ca_certs)
-                        ssl_context.check_hostname = False
+
+                        # Validate ca_certs before attempting to load it.
+                        # An empty/missing path must be handled before calling
+                        # create_default_context, which would raise OSError.
                         if ca_certs is None or ca_certs == "":
-                            ssl_context.verify_mode = ssl.CERT_NONE
                             if not skipCertVerification:
                                 self.log.warning(
-                                    "Could not load ca certificate %s : "
-                                    "too long, possibly corrupted or "
-                                    "file not found", ca_certs)
+                                    "No CA certificate provided. Supply a "
+                                    "valid ca_certs path or set "
+                                    "skipCertVerification=True to allow "
+                                    "connections without certificate "
+                                    "verification.")
                                 return False
+                            ssl_context = ssl.create_default_context()
+                            ssl_context.check_hostname = False
+                            ssl_context.verify_mode = ssl.CERT_NONE
                         else:
-                            ssl_context.verify_mode = ssl.CERT_REQUIRED
+                            try:
+                                ssl_context = ssl.create_default_context(
+                                    cafile=ca_certs)
+                            except OSError as e:
+                                if not skipCertVerification:
+                                    self.log.warning(
+                                        "Could not load CA certificate "
+                                        "'%s': %s. Supply a valid ca_certs "
+                                        "path or set "
+                                        "skipCertVerification=True.",
+                                        ca_certs, e)
+                                    return False
+                                ssl_context = ssl.create_default_context()
+                                ssl_context.check_hostname = False
+                                ssl_context.verify_mode = ssl.CERT_NONE
+                            else:
+                                ssl_context.check_hostname = False
+                                ssl_context.verify_mode = ssl.CERT_REQUIRED
 
                         information = HSV2_SSL_CONNECT
 

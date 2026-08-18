@@ -210,11 +210,11 @@ The level of security (SSL/TLS) that the driver uses for the connection to the d
 
 Similarly, the IBM Netezza server has its own securityLevel setting. The client and server levels must be compatible.
 
-**Cases that will fail:**
-- Client uses `Only Secured` (3) or `Preferred Secured` (2) while server is `Only Unsecured`
-- Client uses `Only Secured` (3) or `Preferred Secured` (2) while server is `Preferred Unsecured`
-- Client uses `Only Unsecured` (1) or `Preferred Unsecured` (0) while server is `Only Secured`
-- Client uses `Only Unsecured` (1) or `Preferred Unsecured` (0) while server is `Preferred Secured`
+**Cases that will fail (guaranteed hard failures):**
+- Client uses `Only Secured` (3) while server is `Only Unsecured` or `Preferred Unsecured`
+- Client uses `Only Unsecured` (1) while server is `Only Secured`
+
+**Note on Preferred modes:** `Preferred Secured` (2) and `Preferred Unsecured` (0) are negotiated — the driver attempts the preferred mode and falls back if the server does not support it. These are not guaranteed failures in mixed configurations.
 
 Below is an example of how to pass `securityLevel` and a CA certificate in the connection string:
 ```python
@@ -264,7 +264,7 @@ Use connect to create a database connection with connection parameters:
 ```
 conn = nzpy.connect(user="admin", password="password",host='localhost', port=5480, database="db1", securityLevel=3, logLevel=0, ssl = {'ca_certs' : '/nz/cacert.pem'})
 ```
-The above example opens a database handle on localhost. nzpy driver should connect on port 5480(postgres port). The user is admin, password is password, database is db1 and the location of the ca certificate file is /nz/cacert.pem with securityLevel as 'Only Secured session' 
+The above example opens a database handle on localhost. IBM Netezza listens on port 5480 by default (note: the nzpy `port` parameter defaults to 5432, so always specify the port explicitly for Netezza). The user is admin, password is password, database is db1, the CA certificate is at /nz/cacert.pem, and securityLevel is set to 'Only Secured session'.
 
 **Connection Parameters**
 When establishing a connection using nzpy you are expected to supply a connection string containing zero or more parameters. The following connection parameters are supported:
