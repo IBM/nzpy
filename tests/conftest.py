@@ -1,8 +1,7 @@
+import os
 import subprocess
 import sys
-
 import nzpy
-
 import pytest
 
 
@@ -10,10 +9,8 @@ import pytest
 def db_kwargs():
     db_connect = {
         'user': 'admin',
-        'password': 'password',
-        'database': 'nzpy_test'
+        'password': 'password'
     }
-
     try:
         db_connect['port'] = 5480
     except KeyError:
@@ -23,6 +20,9 @@ def db_kwargs():
 
 @pytest.fixture
 def con(request, db_kwargs):
+    if os.environ.get('NZPY_IS_REMOTE'):
+        db_kwargs['host'] = os.environ.get('NZPY_HOST')
+        db_kwargs['database'] = os.environ.get('NZPY_DATABASE')
     try:
         sql = ['''nzsql -d "system" -Axc "drop database nzpy_test" ''', ]
         newProc = subprocess.Popen(sql, stdout=subprocess.PIPE)
@@ -35,8 +35,8 @@ def con(request, db_kwargs):
         newProc.wait()
     except Exception as exp:
         print(exp)
-
     conn = nzpy.connect(**db_kwargs)
+    print(f"The connection is created successfully")
 
     def fin():
         conn.rollback()
