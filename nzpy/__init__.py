@@ -51,13 +51,20 @@ def connect(user, host='localhost', unix_sock=None, port=5432, database=None,
             application_name=None, max_prepared_statements=1000,
             datestyle='ISO', logLevel=0, tcp_keepalive=True,
             char_varchar_encoding='latin', logOptions=LogOptions.Inherit,
-            pgOptions=None):
+            pgOptions=None, skipCertVerification=None):
+
+    # Resolve skipCertVerification default based on securityLevel when not
+    # explicitly provided by the caller:
+    #   securityLevel 2 (Preferred Secured) or 3 (Only Secured)  → verify cert
+    #   securityLevel 0 (Preferred Unsecured) or 1 (Only Unsecured) → skip (irrelevant)
+    if skipCertVerification is None:
+        skipCertVerification = securityLevel not in (2, 3)
 
     return Connection(user, host, unix_sock, port, database, password, ssl,
                       securityLevel, timeout, application_name,
                       max_prepared_statements, datestyle, logLevel,
                       tcp_keepalive, char_varchar_encoding,
-                      logOptions, pgOptions)
+                      logOptions, pgOptions, skipCertVerification)
 
 
 apilevel = "2.0"

@@ -78,7 +78,8 @@ class Handshake():
         self.guardium_clientHostName = gethostname()
         self.guardium_applName = path.basename(argv[0])
 
-    def startup(self, database, securityLevel, user, password, pgOptions):
+    def startup(self, database, securityLevel, user, password, pgOptions,
+                skipCertVerification=None):
         #  Negotiate the handshake version (connection protocol)
         if not self.conn_handshake_negotiate(self._sock.write, self._sock.read,
                                              self._sock.flush, self._hsVersion,
@@ -91,7 +92,8 @@ class Handshake():
                                              self._sock.flush, database,
                                              securityLevel, self._hsVersion,
                                              self._protocol1, self._protocol2,
-                                             user, pgOptions):
+                                             user, pgOptions,
+                                             skipCertVerification):
             self.log.warning("Error in conn_send_handshake_info")
             return False
 
@@ -165,7 +167,7 @@ class Handshake():
     def conn_send_handshake_info(self, _write, _read, _flush, _database,
                                  securityLevel, _hsVersion,
                                  _protocol1, _protocol2,
-                                 user, pgOptions):
+                                 user, pgOptions, skipCertVerification=None):
         #  We need database information at the backend in order to
         #  select security restrictions. So always send the database first
         if not self.conn_send_database(_write, _read, _flush, _database):
@@ -173,7 +175,7 @@ class Handshake():
 
         #  If the backend supports security features and if the driver
         #  requires secured session, negotiate security requirements now
-        if not self.conn_secure_session(securityLevel):
+        if not self.conn_secure_session(securityLevel, skipCertVerification):
             return False
 
         if not self.conn_set_next_dataprotocol(self._protocol1,
@@ -240,7 +242,7 @@ class Handshake():
                        self._protocol1, self._protocol2)
         return True
 
-    def conn_secure_session(self, securityLevel):
+    def conn_secure_session(self, securityLevel, skipCertVerification=None):
         information = HSV2_SSL_NEGOTIATE
         currSecLevel = securityLevel
         ssl_context = None
@@ -291,13 +293,41 @@ class Handshake():
                         import ssl
 
                         ca_certs = self.ssl_params.get('ca_certs')
-                        ssl_context = ssl.create_default_context(
-                            cafile=ca_certs)
-                        ssl_context.check_hostname = False
-                        if ca_certs is None:
+
+                        # Validate ca_certs before attempting to load it.
+                        # An empty/missing path must be handled before calling
+                        # create_default_context, which would raise OSError.
+                        if ca_certs is None or ca_certs == "":
+                            if not skipCertVerification:
+                                self.log.warning(
+                                    "No CA certificate provided. Supply a "
+                                    "valid ca_certs path or set "
+                                    "skipCertVerification=True to allow "
+                                    "connections without certificate "
+                                    "verification.")
+                                return False
+                            ssl_context = ssl.create_default_context()
+                            ssl_context.check_hostname = False
                             ssl_context.verify_mode = ssl.CERT_NONE
                         else:
-                            ssl_context.verify_mode = ssl.CERT_REQUIRED
+                            try:
+                                ssl_context = ssl.create_default_context(
+                                    cafile=ca_certs)
+                            except OSError as e:
+                                if not skipCertVerification:
+                                    self.log.warning(
+                                        "Could not load CA certificate "
+                                        "'%s': %s. Supply a valid ca_certs "
+                                        "path or set "
+                                        "skipCertVerification=True.",
+                                        ca_certs, e)
+                                    return False
+                                ssl_context = ssl.create_default_context()
+                                ssl_context.check_hostname = False
+                                ssl_context.verify_mode = ssl.CERT_NONE
+                            else:
+                                ssl_context.check_hostname = False
+                                ssl_context.verify_mode = ssl.CERT_REQUIRED
 
                         information = HSV2_SSL_CONNECT
 
@@ -325,13 +355,21 @@ class Handshake():
                     return True
 
                 if beresp == b'E':
-                    #  If 'E' is received, because the SSL
-                    #  session establishment failed, and we are
-                    #  requesting preferred secured session,
-                    #  we will have to attempt a non secured session.
-                    #  If this also fails, we have to error out.
-                    #  To achieve this, we now negotiate for
-                    #  essential non-secured session
+                    #  If 'E' is received, because the SSL session
+                    #  establishment failed, and we are requesting preferred
+                    #  secured session, we will have to attempt a non secured
+                    #  session. If this also fails, we have to error out.
+                    #  To achieve this, we now negotiate for essential
+                    #  non-secured session.
+                    #
+                    #  If securityLevel == 1 (Only Unsecured) the server is
+                    #  requiring SSL which we cannot satisfy — fail immediately.
+                    if currSecLevel == 1:
+                        self.log.warning(
+                            "Error: server requires SSL but securityLevel=1 "
+                            "(Only Unsecured) was requested. Use "
+                            "securityLevel=2 or 3 to enable SSL.")
+                        return False
                     self.log.warning("Error: connection failed")
                     return False
 
