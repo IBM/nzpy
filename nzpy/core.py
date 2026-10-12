@@ -1834,7 +1834,12 @@ class Connection():
 
         self.status = CONN_EXECUTING
 
-        response = self.connNextResultSet(cursor)
+        try:
+            response = self.connNextResultSet(cursor)
+        except ConnectionClosedError:
+            self._sock = None
+            self.log.error("Connection lost while waiting for query response")
+            raise
 
         if self.error is not None:
             raise ProgrammingError(self.error)
@@ -1847,14 +1852,14 @@ class Connection():
         fh = None
 
         while (1):
-            response = self._read(1)
+            response = self._safe_read(1)
             self.log.debug("Backend response: %s", response)
-            self._read(4)
+            self._safe_read(4)
 
             if response == COMMAND_COMPLETE:
                 #  portal query command, no tuples returned
-                length = i_unpack(self._read(4))[0]
-                data = self._read(length)
+                length = i_unpack(self._safe_read(4))[0]
+                data = self._safe_read(length)
                 self.handle_COMMAND_COMPLETE(data, cursor)
                 self.log.debug("Response received from "
                                "backend: %s", str(data, self._client_encoding))
@@ -1868,31 +1873,31 @@ class Connection():
             if response == b"A":
                 pass
             if response == b"P":
-                length = i_unpack(self._read(4))[0]
+                length = i_unpack(self._safe_read(4))[0]
                 self.log.debug("Response received from "
-                               "backend:%s", str(self._read(length),
+                               "backend:%s", str(self._safe_read(length),
                                                  self._client_encoding))
                 continue
             if response == ERROR_RESPONSE:
-                length = i_unpack(self._read(4))[0]
-                self.error = str(self._read(length), self._client_encoding)
+                length = i_unpack(self._safe_read(4))[0]
+                self.error = str(self._safe_read(length), self._client_encoding)
                 self.log.debug("Response received from backend:%s", self.error)
                 continue
             if response == ROW_DESCRIPTION:
-                length = i_unpack(self._read(4))[0]
+                length = i_unpack(self._safe_read(4))[0]
                 cursor.ps = {'row_desc': []}
-                self.handle_ROW_DESCRIPTION(self._read(length), cursor)
+                self.handle_ROW_DESCRIPTION(self._safe_read(length), cursor)
                 # We've got row_desc that allows us to identify what we're
                 # going to get back from this statement.
                 cursor.ps['input_funcs'] = tuple(f['func'] for
                                                  f in cursor.ps['row_desc'])
             if response == DATA_ROW:
-                length = i_unpack(self._read(4))[0]
-                self.handle_DATA_ROW(self._read(length), cursor)
+                length = i_unpack(self._safe_read(4))[0]
+                self.handle_DATA_ROW(self._safe_read(length), cursor)
             if response == b"X":
-                length = i_unpack(self._read(4))[0]
+                length = i_unpack(self._safe_read(4))[0]
                 self.tupdesc = DbosTupleDesc()
-                self.Res_get_dbos_column_descriptions(self._read(length),
+                self.Res_get_dbos_column_descriptions(self._safe_read(length),
                                                       self.tupdesc)
                 continue
             if response == b"Y":
@@ -1903,12 +1908,12 @@ class Connection():
                 #  in ODBC, the first 10 bytes are utilized to
                 #  populate clientVersion, formatType and bufSize
                 #  these are not needed in go lang, hence ignoring 10 bytes
-                self._read(10)
+                self._safe_read(10)
                 # Next 16 bytes are Reserved Bytes for future extension
-                self._read(16)
+                self._safe_read(16)
                 # Get the filename (specified in dataobject)
-                length = i_unpack(self._read(4))[0]
-                fnameBuf = self._read(length)
+                length = i_unpack(self._safe_read(4))[0]
+                fnameBuf = self._safe_read(length)
                 fname = str(fnameBuf, self._client_encoding)
                 try:
                     is_fifo = stat.S_ISFIFO(os.stat(fname).st_mode) if os.path.exists(fname) else False
@@ -1931,34 +1936,34 @@ class Connection():
                 self.xferTable()
 
             if response == b"x":  # handle Ext Tbl parser abort
-                self._read(4)
+                self._safe_read(4)
                 self.log.warning("Error operation cancel")
 
             if response == b"e":
 
-                length = i_unpack(self._read(4))[0]
-                logDir = str(self._read(length - 1), self._client_encoding)
+                length = i_unpack(self._safe_read(4))[0]
+                logDir = str(self._safe_read(length - 1), self._client_encoding)
 
-                self._read(1)
+                self._safe_read(1)
                 #  ignore one byte as it is null character at
                 #  the end of the string
-                char = c_unpack(self._read(1))[0]
+                char = c_unpack(self._safe_read(1))[0]
                 filenameBuf = bytearray(char)
                 while True:
-                    char = c_unpack(self._read(1))[0]
+                    char = c_unpack(self._safe_read(1))[0]
                     if char == b'\x00':
                         break
                     filenameBuf.extend(char)
 
                 filename = str(filenameBuf, self._client_encoding)
-                logType = i_unpack(self._read(4))[0]
+                logType = i_unpack(self._safe_read(4))[0]
                 if not self.getFileFromBE(logDir, filename, logType):
                     self.log.debug("Error in writing file received from BE")
                 continue
 
             if response == NOTICE_RESPONSE:
-                length = i_unpack(self._read(4))[0]
-                notice = str(self._read(length), self._client_encoding)
+                length = i_unpack(self._safe_read(4))[0]
+                notice = str(self._safe_read(length), self._client_encoding)
                 if notice.startswith('NOTICE:'):
                     notice = notice[len('NOTICE:'):]
                 notice = notice.strip().rstrip('\x00')
@@ -1966,8 +1971,8 @@ class Connection():
                 self.log.debug("Response received from backend:%s", notice)
 
             if response == b"I":
-                length = i_unpack(self._read(4))[0]
-                notice = str(self._read(length), self._client_encoding)
+                length = i_unpack(self._safe_read(4))[0]
+                notice = str(self._safe_read(length), self._client_encoding)
                 if notice.startswith('NOTICE:'):
                     notice = notice[len('NOTICE:'):]
                 notice = notice.strip().rstrip('\x00')
@@ -2490,6 +2495,22 @@ class Connection():
             fh.close()
 
         return status
+
+    def _safe_read(self, n):
+        """Read exactly n bytes from the backend socket.
+
+        Raises ConnectionClosedError immediately if the backend closes the
+        connection (EOF) or returns fewer bytes than requested — instead of
+        silently returning b'' and letting connNextResultSet spin forever on
+        empty reads.
+        """
+        data = self._read(n)
+        if len(data) != n:
+            raise ConnectionClosedError(
+                "Connection lost: backend closed the connection unexpectedly "
+                f"(expected {n} bytes, got {len(data)})"
+            )
+        return data
 
     def _send_message(self, code, data):
         try:

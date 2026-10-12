@@ -1,8 +1,8 @@
 from nzpy.core import (ArrayContentNotHomogenousError,
                        ArrayContentNotSupportedError,
                        ArrayDimensionsNotConsistentError, BINARY,
-                       Binary, Connection, Cursor, DataError,
-                       DatabaseError, Date, DateFromTicks, Error,
+                       Binary, Connection, ConnectionClosedError, Cursor,
+                       DataError, DatabaseError, Date, DateFromTicks, Error,
                        IntegrityError, InterfaceError, InternalError,
                        Interval, LogOptions, NotSupportedError,
                        OperationalError, PGEnum, PGJson, PGJsonb,
@@ -106,12 +106,12 @@ ROWID = 26
 
 __all__ = [
     Warning, DataError, DatabaseError, connect, InterfaceError,
-    ProgrammingError, Error, OperationalError, IntegrityError, InternalError,
-    NotSupportedError, ArrayContentNotHomogenousError,
-    ArrayDimensionsNotConsistentError, ArrayContentNotSupportedError,
-    Connection, Cursor, Binary, Date, DateFromTicks, Time, TimeFromTicks,
-    Timestamp, TimestampFromTicks, BINARY, Interval, PGEnum, PGJson, PGJsonb,
-    PGTsvector, PGText, PGVarchar]
+    ConnectionClosedError, ProgrammingError, Error, OperationalError,
+    IntegrityError, InternalError, NotSupportedError,
+    ArrayContentNotHomogenousError, ArrayDimensionsNotConsistentError,
+    ArrayContentNotSupportedError, Connection, Cursor, Binary, Date,
+    DateFromTicks, Time, TimeFromTicks, Timestamp, TimestampFromTicks,
+    BINARY, Interval, PGEnum, PGJson, PGJsonb, PGTsvector, PGText, PGVarchar]
 
 """Version string for nzpy.
     .. versionadded:: 1.9.11
