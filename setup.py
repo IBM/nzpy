@@ -16,7 +16,7 @@ setup(
     url="https://github.com/ibm/nzpy",
     license="IBM",
     python_requires='>=3.5',
-    install_requires=['scramp==1.4.12', 'looseversion==1.3.0'],
+    install_requires=['scramp==1.4.17', 'looseversion==1.3.0'],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
