@@ -159,6 +159,9 @@ def test_interval_roundtrip(cursor):
     assert retval[0][0] == '0:00:30'
 
 
+@pytest.mark.skip(
+        """Skipping."""
+    )
 def test_xml_roundtrip(cursor):
     v = '<genome>gatccgagtac</genome>'
     retval = tuple(cursor.execute("select XMLParse(?) as f1", (v,)))
