@@ -1779,19 +1779,34 @@ class Connection():
                     isinstance(arg, datetime.date) or \
                     isinstance(arg, datetime.datetime) or \
                     isinstance(arg, dict):
-                strfmt = "'{}'"
-                query = query.replace('?', strfmt.format(arg), 1)
+                # Escape every embedded single-quote by doubling it ('').
+                # This is the standard SQL string-literal escaping rule and
+                # prevents a value like  x' OR '1'='1  from breaking out of
+                # the surrounding  '...'  literal and injecting SQL syntax.
+                escaped = str(arg).replace("'", "''")
+                query = query.replace('?', "'" + escaped + "'", 1)
             elif isinstance(arg, bytes):
-                bytfmt = "x'{}'"
-                query = \
-                    query.replace('?',
-                                  bytfmt.
-                                  format(arg.decode(self._client_encoding)),
-                                  1)
+                # Emit a hex literal  x'DEADBEEF'  built directly from the
+                # raw byte values.  Decoding the bytes to a string and placing
+                # the result inside x'...'  was unsafe because the decoded
+                # text could contain single-quote characters.
+                query = query.replace('?', "x'" + arg.hex() + "'", 1)
             elif arg is None:
                 query = query.replace('?', 'NULL', 1)
-            else:
+            elif isinstance(arg, (int, float, bool)):
+                # Numeric and boolean primitives have no quoting attack surface;
+                # their str() representations contain only digits, '.', '-',
+                # 'True', or 'False' — no SQL-significant characters.
                 query = query.replace('?', str(arg), 1)
+            else:
+                # Reject any type not handled above rather than splicing its
+                # __str__ output directly into SQL.  Callers should convert
+                # the value to str/int/float/bytes/None explicitly.
+                raise InterfaceError(
+                    "Unsupported parameter type %s for value %r. "
+                    "Convert to str, int, float, bytes, or None before "
+                    "passing as a query parameter." % (type(arg).__name__, arg)
+                )
 
         if statement.find('select') == 0 or statement.find('SELECT') == 0:
             statement = statement + " ANALYZE"
