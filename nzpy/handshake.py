@@ -353,9 +353,10 @@ class Handshake():
                         # securityLevel=3 is "Only Secured": a server reply of
                         # 'N' (no TLS) is a hard failure — the same as 'E'.
                         # Never proceed to authentication on a plaintext socket.
-                        self.log.warning(
-                            "Error: server declined TLS ('N') but "
-                            "securityLevel=3 (Only Secured) requires TLS. ")
+                        self.log.error(
+                            "Server declined TLS ('N') but "
+                            "securityLevel=3 (Only Secured) requires TLS. "
+                            "Refusing connection to prevent cleartext credential exposure.")
                         return False
                     if information == HSV2_SSL_NEGOTIATE:
                         self.log.debug("Attempting unsecured session")
